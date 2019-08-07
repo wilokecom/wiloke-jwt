@@ -1,9 +1,11 @@
 <table class="form-table">
     <tbody>
-        <tr class="wiloke-jwt-expiration-time">
-            <th><label for="wiloke-jwt-yourtoken">Your token</label></th>
-            <td><code><?php echo \WilokeJWT\Helpers\Option::getUserToken(); ?></code></td>
-        </tr>
+    <tr class="wiloke-jwt-expiration-time">
+        <th><label for="wiloke-jwt-yourtoken">Your token</label></th>
+        <td><textarea cols="60" rows="10" id="wiloke-jwt-yourtoken"><?php echo
+                \WilokeJWT\Helpers\Option::getUserToken();
+        ?></textarea></td>
+    </tr>
     </tbody>
 </table>
 

@@ -19,6 +19,40 @@ class GenerateTokenController
         add_action('wp_login', [$this, 'generateTokenAfterLoggedIn'], 10, 2);
         add_action('user_register', [$this, 'generateTokenAfterCreatingAccount']);
         add_action('admin_init', [$this, 'fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe']);
+        add_action('wiloke-jwt/created-access-token', [$this, 'addAccessTokenToLocalStore']);
+        add_action('wp_logout', [$this, 'deleteAccessTokenFromLocalStore']);
+    }
+
+    public function deleteAccessTokenFromLocalStore()
+    {
+        $host = parse_url(get_option('siteurl'), PHP_URL_HOST);
+        setcookie(
+            'wiloke_my_jwt',
+            '',
+            current_time('timestamp') - 10000000,
+            '/',
+            $host,
+            is_ssl()
+        );
+    }
+
+    /**
+     * @param $token
+     */
+    public function addAccessTokenToLocalStore($token)
+    {
+        $oSettings = Option::getJWTSettings();
+        $host      = parse_url(get_option('siteurl'), PHP_URL_HOST);
+
+        $expiry = time() + (86400 * $oSettings['token_expiry']);
+        setcookie(
+            'wiloke_my_jwt',
+            $token,
+            $expiry,
+            '/',
+            $host,
+            is_ssl()
+        );
     }
 
     /**
@@ -66,6 +100,8 @@ class GenerateTokenController
 
         $encoded = JWT::encode($aPayload, $aOptions['key']);
         Option::saveUserToken($encoded, $oUser->ID);
+
+        do_action('wiloke-jwt/created-access-token', $encoded);
 
         return $encoded;
     }
