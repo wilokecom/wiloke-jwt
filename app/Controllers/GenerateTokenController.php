@@ -91,6 +91,7 @@ class GenerateTokenController
     /**
      * @param $userLogin
      * @param $oUser
+     * @param $ignoreSetCookie
      *
      * @return string
      */
