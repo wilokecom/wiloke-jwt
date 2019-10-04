@@ -50,8 +50,8 @@ class GenerateTokenController
 
         $oSettings = Option::getJWTSettings();
         $host      = parse_url(get_option('siteurl'), PHP_URL_HOST);
-
-        $expiry = time() + (86400 * $oSettings['token_expiry']);
+        $oSettings['token_expiry'] = empty($oSettings['token_expiry']) ? 1000000000000 : $oSettings['token_expiry'];
+        $expiry = time() + (86400 * abs($oSettings['token_expiry']));
         setcookie(
             'wiloke_my_jwt',
             $token,
