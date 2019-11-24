@@ -21,10 +21,10 @@ class GenerateTokenController
         add_action('wiloke-jwt/created-access-token', [$this, 'addAccessTokenToLocalStore'], 10, 3);
         add_action('clear_auth_cookie', [$this, 'deleteAccessTokenFromLocalStore']);
     }
-    
+
     public function deleteAccessTokenFromLocalStore()
     {
-        $host = parse_url(get_option('siteurl'), PHP_URL_HOST);
+        $host = parse_url(home_url('/'), PHP_URL_HOST);
         setcookie(
             'wiloke_my_jwt',
             '',
@@ -34,7 +34,7 @@ class GenerateTokenController
             is_ssl()
         );
     }
-    
+
     /**
      * @param $token
      * @param $ignoreSetCookie
@@ -47,11 +47,11 @@ class GenerateTokenController
         if ($ignoreSetCookie) {
             return false;
         }
-        
+
         $oSettings                 = Option::getJWTSettings();
-        $host                      = parse_url(get_option('siteurl'), PHP_URL_HOST);
+        $host                      = parse_url(home_url('/'), PHP_URL_HOST);
         $oSettings['token_expiry'] = empty($oSettings['token_expiry']) ? 1000000000000 : $oSettings['token_expiry'];
-        
+
         setcookie(
             'wiloke_my_jwt',
             $token,
@@ -61,7 +61,7 @@ class GenerateTokenController
             is_ssl()
         );
     }
-    
+
     /**
      * @param $oUser \WP_User
      *
@@ -77,7 +77,7 @@ class GenerateTokenController
             ]
         );
     }
-    
+
     public function fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe()
     {
         if (current_user_can('administrator')) {
@@ -86,7 +86,7 @@ class GenerateTokenController
             }
         }
     }
-    
+
     /**
      * @param      $userID
      * @param      $expire
@@ -98,7 +98,7 @@ class GenerateTokenController
     {
         $oUser              = new \WP_User($userID);
         $createdAccessToken = Option::getUserToken($oUser->ID);
-        
+
         if (!empty($createdAccessToken)) {
             $aVerifyStatus = apply_filters('wiloke-jwt/filter/verify-token', [
                 'error' => [
@@ -107,28 +107,28 @@ class GenerateTokenController
                 ]
             ], $createdAccessToken);
         }
-        
+
         if (!isset($aVerifyStatus) || isset($aVerifyStatus['error'])) {
             $aPayload = [
                 'message' => $this->generateTokenMsg($oUser)
             ];
             $aOptions = Option::getJWTSettings();
-            
+
             if (!empty($aOptions['exp'])) {
-                $aPayload['exp'] = strtotime('+'.$aOptions['exp'].' day');
+                $aPayload['exp'] = strtotime('+' . $aOptions['exp'] . ' day');
             }
-            
+
             $encoded = JWT::encode($aPayload, $aOptions['key']);
             Option::saveUserToken($encoded, $oUser->ID);
-            
+
             do_action('wiloke-jwt/created-access-token', $encoded, $expire, $ignoreSetCookie);
-            
+
             return $encoded;
         } else {
             do_action('wiloke-jwt/created-access-token', $createdAccessToken, $expire, $ignoreSetCookie);
         }
     }
-    
+
     /**
      * @param      $loggedInCookie
      * @param      $expire
@@ -141,7 +141,7 @@ class GenerateTokenController
     {
         $this->generateToken($userID, $expire);
     }
-    
+
     /**
      * @param $userID
      *
@@ -150,7 +150,7 @@ class GenerateTokenController
     public function generateTokenAfterCreatingAccount($userID)
     {
         $oUser = new \WP_User($userID);
-        
+
         return $this->generateToken($oUser->user_login, $oUser, true);
     }
 }
