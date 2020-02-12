@@ -13,15 +13,16 @@ class AdminMenuController
     public $slug = 'wiloke-jwt';
     public $optionKey = 'wilokejwt';
     public $aOptions;
-
+    
     /**
      * AdminMenuController constructor.
      */
     public function __construct()
     {
         add_action('admin_menu', [$this, 'registerMenu']);
+        add_action('network_admin_menu', [$this, 'registerMenu']);
     }
-
+    
     public function saveOption()
     {
         $aValues = [];
@@ -36,7 +37,7 @@ class AdminMenuController
             }
         }
     }
-
+    
     public function registerMenu()
     {
         add_menu_page(
@@ -47,7 +48,7 @@ class AdminMenuController
             [$this, 'settings']
         );
     }
-
+    
     public function settings()
     {
         $this->saveOption();

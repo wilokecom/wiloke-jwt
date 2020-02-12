@@ -2,14 +2,14 @@
     <tbody>
     <tr class="wiloke-jwt-expiration-time">
         <th><label for="wiloke-jwt-yourtoken">Your token</label></th>
-        <td><textarea cols="60" rows="10" id="wiloke-jwt-yourtoken"><?php echo
-                \WilokeJWT\Helpers\Option::getUserToken();
-        ?></textarea></td>
+        <td><textarea cols="60" rows="10" id="wiloke-jwt-yourtoken"><?php echo \WilokeJWT\Helpers\Option::getUserToken(); ?></textarea></td>
     </tr>
     </tbody>
 </table>
-
-<form method="POST" action="<?php echo esc_url(admin_url('admin.php?page='.$this->slug)); ?>">
+<?php
+$actionURL = is_network_admin() ? network_admin_url('admin.php?page='.$this->slug) : admin_url('admin.php?page='.$this->slug);
+?>
+<form method="POST" action="<?php echo esc_url($actionURL); ?>">
     <?php wp_nonce_field('wiloke-jwt-action', 'wiloke-jwt-field'); ?>
     <table class="form-table">
         <tbody>
