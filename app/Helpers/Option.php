@@ -9,7 +9,7 @@ class Option
     private static $optionKey = 'wilokejwt';
     private static $userTokenKey = 'wilokejwt';
     private static $aJWTOptions = [];
-
+    
     /**
      * @return array
      */
@@ -18,10 +18,13 @@ class Option
         if (!empty(self::$aJWTOptions)) {
             return self::$aJWTOptions;
         }
-
+        
         $aOptions = get_option(self::$optionKey);
         $aOptions = empty($aOptions) ? [] : $aOptions;
-
+        if (empty($aOptions) && is_multisite()) {
+            $aOptions = get_site_option(self::$optionKey);
+        }
+        
         self::$aJWTOptions = wp_parse_args(
             $aOptions,
             [
@@ -29,18 +32,22 @@ class Option
                 'key'          => uniqid(self::$optionKey.'_')
             ]
         );
-
+        
         return self::$aJWTOptions;
     }
-
+    
     /**
      * @param $val
      */
     public static function saveJWTSettings($val)
     {
-        update_option(self::$optionKey, $val);
+        if (is_network_admin()) {
+            update_site_option(self::$optionKey, $val);
+        } else {
+            update_option(self::$optionKey, $val);
+        }
     }
-
+    
     /**
      * @param $userID
      * @param $token
@@ -50,7 +57,7 @@ class Option
         $userID = empty($userID) ? get_current_user_id() : $userID;
         update_user_meta($userID, self::$userTokenKey, $token);
     }
-
+    
     /**
      * @param string $userID
      *
@@ -59,6 +66,7 @@ class Option
     public static function getUserToken($userID = '')
     {
         $userID = empty($userID) ? get_current_user_id() : $userID;
+        
         return get_user_meta($userID, self::$userTokenKey, true);
     }
 }
