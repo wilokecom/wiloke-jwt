@@ -4,6 +4,11 @@
         <th><label for="wiloke-jwt-yourtoken">Your token</label></th>
         <td><textarea cols="60" rows="10" id="wiloke-jwt-yourtoken"><?php echo \WilokeJWT\Helpers\Option::getUserToken(); ?></textarea></td>
     </tr>
+
+    <tr class="wiloke-jwt-expiration-time">
+        <th><label for="wiloke-jwt-yourrefreshtoken">Your Refresh Token</label></th>
+        <td><textarea cols="60" rows="10" id="wiloke-jwt-yourrefreshtoken"><?php echo \WilokeJWT\Helpers\Option::getRefreshUserToken(); ?></textarea></td>
+    </tr>
     </tbody>
 </table>
 <?php
