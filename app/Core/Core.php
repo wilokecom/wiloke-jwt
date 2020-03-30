@@ -124,15 +124,12 @@ class Core
     }
 
     /**
-     * @param $userID
-     * @param $expire
+     * @param WP_User $oUser
      * @param bool $ignoreSetCookie
      * @return mixed|string
-     * @throws Exception
      */
-    protected function generateToken($userID, $expire, $ignoreSetCookie = false)
+    protected function generateToken(WP_User $oUser, $ignoreSetCookie = false)
     {
-        $oUser = new WP_User($userID);
         $token = Option::getUserToken($oUser->ID);
 
         if (!empty($token)) {
@@ -141,7 +138,6 @@ class Core
             } catch (Exception $exception) {
 
             }
-
         }
 
         if (!isset($oUserInfo)) {
@@ -153,9 +149,9 @@ class Core
             $token = JWT::encode($aPayload, Option::getAccessTokenKey());
             Option::saveUserToken($token, $oUser->ID);
 
-            do_action('wiloke-jwt/created-access-token', $token, $expire, $ignoreSetCookie);
+            do_action('wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $ignoreSetCookie);
         } else {
-            do_action('wiloke-jwt/created-access-token', $token, $expire, $ignoreSetCookie);
+            do_action('wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $ignoreSetCookie);
         }
 
         return $token;
@@ -177,11 +173,6 @@ class Core
         Option::saveUserRefreshToken($encoded, $oUser->ID);
 
         return $encoded;
-    }
-
-    protected function setRefreshTokenSession($token)
-    {
-        Session::setSession('wiloke_jwt_refresh_token', $token);
     }
 
     protected function isAccessTokenExpired($accessToken)

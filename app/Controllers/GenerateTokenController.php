@@ -56,9 +56,15 @@ final class GenerateTokenController extends Core
     {
         try {
             $oUserInfo = $this->verifyToken($token, 'refresh_access_token');
+            $this->revokeRefreshAccessToken($oUserInfo->userID);
+            $oUser = new WP_User($oUserInfo->userID);
+            $refreshToken = $this->generateRefreshToken($oUser);
+            $accessToken = $this->generateToken($oUser->ID);
+
             return [
                 'data' => [
-                    'refreshToken' => $this->revokeAccessToken($oUserInfo->userID)
+                    'refreshToken' => $refreshToken,
+                    'accessToken' => $accessToken
                 ]
             ];
         } catch (Exception $exception) {
@@ -99,7 +105,8 @@ final class GenerateTokenController extends Core
     {
         if (current_user_can('administrator')) {
             if (empty(Option::getUserToken())) {
-                self::generateToken(get_current_user_id(), 0);
+                $oUser = new WP_User(get_current_user_id());
+                $this->generateToken($oUser);
             }
         }
     }
@@ -123,7 +130,6 @@ final class GenerateTokenController extends Core
         }
 
         $refreshToken = $this->generateRefreshToken($oUser);
-        $this->setRefreshTokenSession($refreshToken);
         if (!empty($refreshToken)) {
             $this->renewAccessToken($refreshToken);
             do_action('wiloke-jwt/created-refresh-token', $refreshToken, $userId, $oUser);
@@ -145,8 +151,6 @@ final class GenerateTokenController extends Core
             $refreshToken = Option::getRefreshUserToken($oUser->ID);
 
             if (!empty($refreshToken)) {
-                $this->setRefreshTokenSession($refreshToken);
-
                 try {
                     $accessToken = $this->renewAccessToken($refreshToken);
                     $this->storeAccessTokenToCookie($accessToken);
@@ -167,7 +171,7 @@ final class GenerateTokenController extends Core
     {
         $oUser = new WP_User($userID);
 
-        return $this->generateToken($oUser->user_login, $oUser, true);
+        return $this->generateToken($oUser, true);
     }
 
     /**
