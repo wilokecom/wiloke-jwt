@@ -74,7 +74,7 @@ final class GenerateTokenController extends Core
             return [
                 'error' => [
                     'message' => $exception->getMessage(),
-                    'code' => 403
+                    'code' => 401
                 ]
             ];
         }
@@ -161,11 +161,13 @@ final class GenerateTokenController extends Core
         }
         $this->handlingUserLogin = true;
         $refreshToken = Option::getRefreshUserToken($oUser->ID);
+        $accessToken = '';
 
         if (empty($refreshToken)) {
             $this->generateRefreshToken($oUser);
+        } else {
+            $accessToken = Option::getUserToken($oUser->ID);
         }
-        $accessToken = Option::getUserToken($oUser->ID);
 
         try {
             $this->verifyToken($accessToken);
