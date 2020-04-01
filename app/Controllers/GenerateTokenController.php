@@ -15,11 +15,14 @@ use WP_User;
  */
 final class GenerateTokenController extends Core
 {
+    private $handlingUserLogin = false;
+
     /**
      * GenerateTokenController constructor.
      */
     public function __construct()
     {
+        add_action('set_logged_in_cookie', [$this, 'handleTokenAfterUserSetLoggedInCookie'], 10, 4);
         add_action('wp_login', [$this, 'handleTokenAfterUserSignedIn'], 10, 2);
         add_action('admin_init', [$this, 'fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe']);
         add_action('wiloke-jwt/created-access-token', [$this, 'storeAccessTokenToCookie'], 10, 3);
@@ -136,6 +139,16 @@ final class GenerateTokenController extends Core
         }
     }
 
+    public function handleTokenAfterUserSetLoggedInCookie($logged_in_cookie, $expire, $expiration, $user_id)
+    {
+        if ($this->handlingUserLogin) {
+            return false;
+        }
+
+        $oUser = new WP_User($user_id);
+        $this->handleTokenAfterUserSignedIn($oUser->user_email, $oUser);
+    }
+
     /**
      * @param $userEmail
      * @param $oUser
@@ -143,7 +156,17 @@ final class GenerateTokenController extends Core
      */
     public function handleTokenAfterUserSignedIn($userEmail, $oUser)
     {
+        if ($this->handlingUserLogin) {
+            return false;
+        }
+        $this->handlingUserLogin = true;
+        $refreshToken = Option::getRefreshUserToken($oUser->ID);
+
+        if (empty($refreshToken)) {
+            $this->generateRefreshToken($oUser);
+        }
         $accessToken = Option::getUserToken($oUser->ID);
+
         try {
             $this->verifyToken($accessToken);
             return true;
