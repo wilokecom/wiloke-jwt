@@ -31,7 +31,8 @@ class Option
             $aOptions,
             [
                 'token_expiry' => 1,
-                'key' => uniqid(self::$optionKey . '_')
+                'key' => uniqid(self::$optionKey . '_'),
+                'is_test' => 'no'
             ]
         );
 
@@ -66,11 +67,16 @@ class Option
         return strtotime('+1000 day');
     }
 
-    public static function getAccessTokenExp() {
+    public static function getAccessTokenExp()
+    {
+        if (Option::getOptionField('is_test') === 'yes') {
+            return strtotime('+1 minutes');
+        }
+
         $val = abs(Option::getOptionField('exp'));
         $val = empty($val) ? 1 : $val;
 
-        return strtotime('+'.$val.' day');
+        return strtotime('+' . $val . ' day');
     }
 
     /**

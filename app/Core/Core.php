@@ -57,7 +57,7 @@ class Core
         $errMsg = '';
         $oUser = (object)[];
         try {
-            if ($type === 'refresh_access_token') {
+            if ($type === 'refresh_token') {
                 $key = Option::getRefreshTokenKey();
             } else {
                 $key = Option::getAccessTokenKey();
@@ -69,7 +69,7 @@ class Core
             if (!isset($oUser->userID) || empty($oUser->userID)) {
                 $errMsg = esc_html__('The user has been removed or does not exist', 'wiloke-jwt');
             } else {
-                if ($type === 'refresh_access_token') {
+                if ($type === 'refresh_token') {
                     $currentToken = Option::getRefreshUserToken($oUser->userID);
                 } else {
                     $currentToken = Option::getUserToken($oUser->userID);
@@ -97,7 +97,7 @@ class Core
      */
     protected function renewAccessToken($refreshToken)
     {
-        $oInfo = $this->verifyToken($refreshToken, 'refresh_access_token');
+        $oInfo = $this->verifyToken($refreshToken, 'refresh_token');
         $oUser = new WP_User($oInfo->userID);
 
         if (empty($oUser) || is_wp_error($oUser)) {
@@ -105,7 +105,7 @@ class Core
         }
 
         $this->revokeAccessToken($oUser->ID);
-        return $this->generateToken($oUser->ID, $oUser);
+        return $this->generateToken($oUser);
     }
 
     /**
@@ -128,7 +128,7 @@ class Core
      * @param bool $ignoreSetCookie
      * @return mixed|string
      */
-    protected function generateToken(WP_User $oUser, $ignoreSetCookie = false)
+    protected function generateToken(\WP_User $oUser, $ignoreSetCookie = false)
     {
         $token = Option::getUserToken($oUser->ID);
 
@@ -182,9 +182,14 @@ class Core
             $oUserInfo = json_decode($oParse->message);
 
             $userAccessToken = Option::getUserToken($oUserInfo->userID);
-
+            $this->verifyToken($userAccessToken);
             return $userAccessToken !== $accessToken;
         } catch (Exception $exception) {
+            $message = $exception->getMessage();
+            if (is_string($message) && strtoupper($message) === 'EXPIRED TOKEN') {
+                return true;
+            }
+
             return false;
         }
     }
