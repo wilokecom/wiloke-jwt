@@ -29,6 +29,15 @@ $actionURL = is_network_admin() ? network_admin_url('admin.php?page='.$this->slu
             <td><input type="text" name="wilokejwt[key]" id="wiloke-jwt-key" value="<?php echo
                 esc_attr($this->aOptions['key']); ?>" class="regular-text"></td>
         </tr>
+        <tr class="wiloke-jwt-key">
+            <th><label for="wiloke-jwt-is-test">Is Test?</label></th>
+            <td>
+                <select name="wilokejwt[is_test]" id="wiloke-jwt-is-test">
+                    <option value="no" <?php echo selected('no', $this->aOptions['is_test']); ?>>No</option>
+                    <option value="yes" <?php echo selected('yes', $this->aOptions['is_test']); ?>>Yes</option>
+                </select>
+            </td>
+        </tr>
         </tbody>
     </table>
     <button class="button button-primary" type="submit">Save Changes</button>
