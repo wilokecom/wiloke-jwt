@@ -31,7 +31,7 @@ final class GenerateTokenController extends Core
         add_filter('wiloke/filter/get-refresh-token', [$this, 'getUserRefreshToken']);
         add_filter('wiloke/filter/revoke-access-token', [$this, 'filterRevokeAccessToken'], 10, 2);
         add_filter('wiloke/filter/revoke-refresh-access-token', [$this, 'filterRevokeRefreshAccessToken'], 10, 2);
-        add_filter('wiloke/filter/renew-access-token', [$this, 'filterRenewAccessToken'], 10, 2);
+        add_filter('wiloke/filter/renew-access-token', [$this, 'filterRenewAccessToken'], 10, 3);
         add_filter('wiloke/filter/is-access-token-expired', [$this, 'filterIsTokenExpired'], 10, 2);
         add_action('clean_user_cache', [$this, 'maybeRevokeRefreshPasswordAfterUpdatingUser'], 10, 2);
         add_action('delete_user', [$this, 'deleteTokensBeforeDeletingUser'], 10);
@@ -231,9 +231,10 @@ final class GenerateTokenController extends Core
     /**
      * @param $aStatus
      * @param $refreshToken
+     * @param $oldAccessToken
      * @return array
      */
-    public function filterRenewAccessToken($aStatus, $refreshToken)
+    public function filterRenewAccessToken($aStatus, $refreshToken, $oldAccessToken)
     {
         try {
             $oUserInfo = $this->verifyToken($refreshToken, 'refresh_token');
@@ -244,6 +245,16 @@ final class GenerateTokenController extends Core
                     'accessToken' => $this->renewAccessToken($refreshToken)
                 ];
             } else {
+                // make sure that the old access token is user's token
+                $isValidToken = $this->isValidAccessTokenEvenExpired($oldAccessToken);
+
+                if ($isValidToken && $oldAccessToken !== $accessToken && $this->isBlackListAccessToken
+                    ($oUserInfo->userID, $oldAccessToken)) {
+                    return [
+                        'accessToken' => $accessToken
+                    ];
+                }
+
                 return [
                     'error' => [
                         'message' => esc_html__('The renew token is freezed', 'hsblog-core'),
@@ -255,7 +266,8 @@ final class GenerateTokenController extends Core
             return [
                 'error' => [
                     'message' => $e->getMessage(),
-                    'code' => 401
+                    'code' => 401,
+                    'statusCode' => 'TOKEN_EXPIRED'
                 ]
             ];
         }

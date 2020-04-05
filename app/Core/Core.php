@@ -17,6 +17,34 @@ class Core
         return Option::getAccessTokenExp();
     }
 
+    private function getBlackListAccessToken($userId)
+    {
+        $blackListAT = get_user_meta($userId, 'black_list_access_token', true);
+        return empty($blackListAT) ? [] : $blackListAT;
+    }
+
+    /**
+     * @param $userId
+     * @param $accessToken
+     * @return bool
+     */
+    protected function isBlackListAccessToken($userId, $accessToken)
+    {
+        $aBlackList = $this->getBlackListAccessToken($userId);
+        return in_array($accessToken, $aBlackList);
+    }
+
+    private function setBlackListAccessToken($userId, $accessToken)
+    {
+        $aBlackLists = $this->getBlackListAccessToken($userId);
+        $aBlackLists = array_splice($aBlackLists, 0, 49); // maximum 50 items only
+        array_unshift($aBlackLists, $accessToken);
+
+        update_user_meta($userId, 'black_list_access_token', $aBlackLists);
+
+        return $aBlackLists;
+    }
+
     /**
      * @param $userId
      * @return bool
@@ -33,6 +61,8 @@ class Core
             is_ssl()
         );
 
+        $accessToken = Option::getUserToken($userId);
+        $this->setBlackListAccessToken($userId, $accessToken);
         return Option::revokeAccessToken($userId);
     }
 
@@ -44,6 +74,22 @@ class Core
     {
         self::revokeAccessToken($userId);
         return Option::revokeRefreshToken($userId);
+    }
+
+    /**
+     * @param $token
+     * @return bool|mixed
+     */
+    protected function isValidAccessTokenEvenExpired($token)
+    {
+        try {
+            $key = Option::getAccessTokenKey();
+            $oParse = JWT::decode($token, $key, ['HS256']);
+            $oUser = json_decode($oParse->message);
+            return isset($oUser->userID) && !empty($oUser->userID);
+        } catch (Exception $oE) {
+            return strtoupper($oE->getMessage()) === 'EXPIRED TOKEN';
+        }
     }
 
     /**
@@ -128,7 +174,7 @@ class Core
      * @param bool $ignoreSetCookie
      * @return mixed|string
      */
-    protected function generateToken(\WP_User $oUser, $ignoreSetCookie = false)
+    protected function generateToken(WP_User $oUser, $ignoreSetCookie = false)
     {
         $token = Option::getUserToken($oUser->ID);
 
