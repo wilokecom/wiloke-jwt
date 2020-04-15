@@ -30,7 +30,7 @@ class Option
         self::$aJWTOptions = wp_parse_args(
             $aOptions,
             [
-                'token_expiry' => 1,
+                'token_expiry' => 10,
                 'key'          => uniqid(self::$optionKey.'_'),
                 'is_test'      => 'no'
             ]
@@ -51,6 +51,9 @@ class Option
         return isset(self::$aJWTOptions[$field]) ? self::$aJWTOptions[$field] : '';
     }
     
+    /**
+     * @return string
+     */
     public static function getAccessTokenKey()
     {
         $key = self::getRefreshTokenKey();
@@ -58,6 +61,9 @@ class Option
         return 'access_token_'.$key;
     }
     
+    /**
+     * @return mixed|string
+     */
     public static function getRefreshTokenKey()
     {
         $key = self::getOptionField('key');
@@ -65,21 +71,30 @@ class Option
         return empty($key) ? 'wiloke_jwt' : $key;
     }
     
+    /**
+     * @return false|int
+     */
     public static function getRefreshAccessTokenExp()
     {
         return strtotime('+1000 day');
     }
     
+    /**
+     * @return false|int
+     */
     public static function getAccessTokenExp()
     {
-        if (Option::getOptionField('is_test') === 'yes') {
-            return strtotime('+1 minutes');
+        if (Option::getOptionField('is_test_mode') === 'yes') {
+            $val = abs(Option::getOptionField('test_token_expired'));
+            $val = empty($val) ? 10 : $val;
+            
+            return strtotime('+'.$val.' seconds');
         }
         
-        $val = abs(Option::getOptionField('exp'));
+        $val = abs(Option::getOptionField('token_expiry'));
         $val = empty($val) ? 1 : $val;
         
-        return strtotime('+'.$val.' day');
+        return strtotime('+'.$val.' hour');
     }
     
     /**
@@ -128,6 +143,12 @@ class Option
         return update_user_meta($userID, self::$userTokenKey, $token);
     }
     
+    /**
+     * @param        $freshToken
+     * @param string $userID
+     *
+     * @return bool|int
+     */
     public static function saveUserRefreshToken($freshToken, $userID = '')
     {
         $userID = self::safeGetUserId($userID);
