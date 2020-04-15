@@ -36,7 +36,13 @@ final class GenerateTokenController extends Core
         add_action('clean_user_cache', [$this, 'maybeRevokeRefreshPasswordAfterUpdatingUser'], 10, 2);
         add_action('delete_user', [$this, 'deleteTokensBeforeDeletingUser'], 10);
     }
-
+    
+    /**
+     * @param $status
+     * @param $accessToken
+     *
+     * @return bool
+     */
     public function filterIsTokenExpired($status, $accessToken)
     {
         return $this->isAccessTokenExpired($accessToken);
@@ -136,13 +142,24 @@ final class GenerateTokenController extends Core
             }
         }
     }
-
+    
+    /**
+     * @param string $userId
+     *
+     * @return bool|mixed
+     */
     public function getUserRefreshToken($userId = '')
     {
         $userId = !empty($userId) ? $userId : get_current_user_id();
         return Option::getRefreshUserToken($userId);
     }
-
+    
+    /**
+     * @param $userId
+     *
+     * @return bool|WP_User
+     * @throws Exception
+     */
     public function createRefreshTokenAfterUserRegisteredAccount($userId)
     {
         if (empty($userId)) {
@@ -161,7 +178,15 @@ final class GenerateTokenController extends Core
             do_action('wiloke-jwt/created-refresh-token', $refreshToken, $userId, $oUser);
         }
     }
-
+    
+    /**
+     * @param $logged_in_cookie
+     * @param $expire
+     * @param $expiration
+     * @param $user_id
+     *
+     * @return bool
+     */
     public function handleTokenAfterUserSetLoggedInCookie($logged_in_cookie, $expire, $expiration, $user_id)
     {
         if ($this->handlingUserLogin) {

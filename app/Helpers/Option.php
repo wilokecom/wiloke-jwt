@@ -30,9 +30,10 @@ class Option
         self::$aJWTOptions = wp_parse_args(
             $aOptions,
             [
-                'token_expiry' => 10,
-                'key'          => uniqid(self::$optionKey.'_'),
-                'is_test'      => 'no'
+                'token_expiry'       => 10,
+                'test_token_expired' => '',
+                'key'                => uniqid(self::$optionKey.'_'),
+                'is_test_mode'       => 'no'
             ]
         );
         
