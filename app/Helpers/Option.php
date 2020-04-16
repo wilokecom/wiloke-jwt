@@ -81,6 +81,14 @@ class Option
     }
     
     /**
+     * @return bool
+     */
+    public static function isTestMode()
+    {
+        return Option::getOptionField('is_test_mode') === 'yes';
+    }
+    
+    /**
      * @return false|int
      */
     public static function getAccessTokenExp()
@@ -165,7 +173,7 @@ class Option
      *
      * @return bool|mixed
      */
-    public static function getRefreshUserToken($userID = '')
+    public static function getUserRefreshToken($userID = '')
     {
         $userID = self::safeGetUserId($userID);
         if (empty($userID)) {
@@ -173,6 +181,21 @@ class Option
         }
         
         return get_user_meta($userID, self::$userRefreshTokenKey, true);
+    }
+    
+    /**
+     * @param string $userID
+     *
+     * @return bool|mixed
+     */
+    public static function getUserAccessToken($userID = '')
+    {
+        $userID = self::safeGetUserId($userID);
+        if (empty($userID)) {
+            return false;
+        }
+        
+        return get_user_meta($userID, self::$userTokenKey, true);
     }
     
     /**

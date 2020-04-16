@@ -7,16 +7,27 @@ namespace WilokeJWT\Core;
 use Exception;
 use Firebase\JWT\JWT;
 use WilokeJWT\Helpers\Option;
-use WilokeJWT\Helpers\Session;
 use WP_User;
 
+/**
+ * Class Core
+ * @package WilokeJWT\Core
+ */
 class Core
 {
+    /**
+     * @return false|int
+     */
     protected function getTokenExpired()
     {
         return Option::getAccessTokenExp();
     }
-
+    
+    /**
+     * @param $userId
+     *
+     * @return array|mixed
+     */
     private function getBlackListAccessToken($userId)
     {
         $blackListAT = get_user_meta($userId, 'black_list_access_token', true);
@@ -33,7 +44,13 @@ class Core
         $aBlackList = $this->getBlackListAccessToken($userId);
         return in_array($accessToken, $aBlackList);
     }
-
+    
+    /**
+     * @param $userId
+     * @param $accessToken
+     *
+     * @return array|mixed
+     */
     private function setBlackListAccessToken($userId, $accessToken)
     {
         $aBlackLists = $this->getBlackListAccessToken($userId);
@@ -102,6 +119,7 @@ class Core
     {
         $errMsg = '';
         $oUser = (object)[];
+  
         try {
             if ($type === 'refresh_token') {
                 $key = Option::getRefreshTokenKey();
@@ -116,7 +134,7 @@ class Core
                 $errMsg = esc_html__('The user has been removed or does not exist', 'wiloke-jwt');
             } else {
                 if ($type === 'refresh_token') {
-                    $currentToken = Option::getRefreshUserToken($oUser->userID);
+                    $currentToken = Option::getUserRefreshToken($oUser->userID);
                 } else {
                     $currentToken = Option::getUserToken($oUser->userID);
                 }
@@ -220,7 +238,12 @@ class Core
 
         return $encoded;
     }
-
+    
+    /**
+     * @param $accessToken
+     *
+     * @return bool
+     */
     protected function isAccessTokenExpired($accessToken)
     {
         try {
