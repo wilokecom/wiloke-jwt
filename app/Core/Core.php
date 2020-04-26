@@ -247,12 +247,12 @@ class Core
     protected function isAccessTokenExpired($accessToken)
     {
         try {
-            $oParse = JWT::decode($accessToken, Option::getAccessTokenKey(), ['HS256']);
-            $oUserInfo = json_decode($oParse->message);
-
-            $userAccessToken = Option::getUserToken($oUserInfo->userID);
-            $this->verifyToken($userAccessToken);
-            return $userAccessToken !== $accessToken;
+            JWT::decode($accessToken, Option::getAccessTokenKey(), ['HS256']);
+//            $oUserInfo = json_decode($oParse->message);
+//
+//            $userAccessToken = Option::getUserToken($oUserInfo->userID);
+//            $this->verifyToken($userAccessToken);
+            return false;
         } catch (Exception $exception) {
             $message = $exception->getMessage();
             if (is_string($message) && strtoupper($message) === 'EXPIRED TOKEN') {
