@@ -23,10 +23,11 @@ class Option
         
         $aOptions = get_option(self::$optionKey);
         $aOptions = empty($aOptions) ? [] : $aOptions;
+
         if (empty($aOptions) && is_multisite()) {
             $aOptions = get_site_option(self::$optionKey);
         }
-        
+
         self::$aJWTOptions = wp_parse_args(
             $aOptions,
             [
@@ -111,10 +112,10 @@ class Option
      */
     public static function saveJWTSettings($val)
     {
-        if (is_network_admin()) {
-            update_site_option(self::$optionKey, $val);
-        } else {
+        if (is_main_network()){
             update_option(self::$optionKey, $val);
+        } else {
+            update_site_option(self::$optionKey, $val);
         }
     }
     
