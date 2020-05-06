@@ -52,7 +52,8 @@ class AdminMenuController
     public function settings()
     {
         $this->saveOption();
-        $this->aOptions = Option::getJWTSettings();
+        $this->aOptions = Option::getSiteJWTSettings();
+        
         include WILOKE_JWT_VIEWS.'wiloke-jwt-settings.php';
     }
 }

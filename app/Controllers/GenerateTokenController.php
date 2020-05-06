@@ -27,7 +27,7 @@ final class GenerateTokenController extends Core
         add_action('admin_init', [$this, 'fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe']);
         add_action('wiloke-jwt/created-access-token', [$this, 'storeAccessTokenToCookie'], 10, 3);
 //        add_action('clear_auth_cookie', [$this, 'removeAccessTokenAfterLogout']);
-        adcd_action('user_register', [$this, 'createRefreshTokenAfterUserRegisteredAccount']);
+        add_action('user_register', [$this, 'createRefreshTokenAfterUserRegisteredAccount']);
         add_filter('wiloke/filter/get-refresh-token', [$this, 'getUserRefreshToken']);
         add_filter('wiloke/filter/revoke-access-token', [$this, 'filterRevokeAccessToken'], 10, 2);
         add_filter('wiloke/filter/revoke-refresh-access-token', [$this, 'filterRevokeRefreshAccessToken'], 10, 2);
