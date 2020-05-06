@@ -26,7 +26,7 @@ final class GenerateTokenController extends Core
         add_action('wp_login', [$this, 'handleTokenAfterUserSignedIn'], 10, 2);
         add_action('admin_init', [$this, 'fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe']);
         add_action('wiloke-jwt/created-access-token', [$this, 'storeAccessTokenToCookie'], 10, 3);
-//        add_action('clear_auth_cookie', [$this, 'removeAccessTokenAfterLogout']);
+        //        add_action('clear_auth_cookie', [$this, 'removeAccessTokenAfterLogout']);
         add_action('user_register', [$this, 'createRefreshTokenAfterUserRegisteredAccount']);
         add_filter('wiloke/filter/get-refresh-token', [$this, 'getUserRefreshToken']);
         add_filter('wiloke/filter/revoke-access-token', [$this, 'filterRevokeAccessToken'], 10, 2);
@@ -290,7 +290,8 @@ final class GenerateTokenController extends Core
             $accessToken = Option::getUserToken($oUserInfo->userID);
             if ($this->isAccessTokenExpired($accessToken)) {
                 return [
-                    'accessToken' => $this->renewAccessToken($refreshToken)
+                    'accessToken' => $this->renewAccessToken($refreshToken),
+                    'userID'      => $oUserInfo->userID
                 ];
             } else {
                 return [

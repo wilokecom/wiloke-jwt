@@ -126,7 +126,7 @@ class Core
             } else {
                 $key = Option::getAccessTokenKey();
             }
-
+    
             $oParse = JWT::decode($token, $key, ['HS256']);
             $oUser = json_decode($oParse->message);
 
