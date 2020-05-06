@@ -11,6 +11,7 @@ class Option
     private static $userTokenKey = 'wilokejwt';
     private static $userRefreshTokenKey = 'wilokerefreshjwt';
     private static $aJWTOptions = [];
+    private static $aSiteJWTOptions = [];
     
     /**
      * @return array
@@ -22,8 +23,7 @@ class Option
         }
         
         $aOptions = get_option(self::$optionKey);
-        $aOptions = empty($aOptions) ? [] : $aOptions;
-        if (empty($aOptions) && is_multisite()) {
+        if ((!$aOptions || !isset($aOptions['key']) || empty($aOptions['key'])) && is_multisite()) {
             $aOptions = get_site_option(self::$optionKey);
         }
         
@@ -38,6 +38,20 @@ class Option
         );
         
         return self::$aJWTOptions;
+    }
+    
+    /**
+     * @return mixed|void
+     */
+    public static function getSiteJWTSettings()
+    {
+        if (!is_multisite() || !is_main_site()) {
+            self::$aSiteJWTOptions = get_option(self::$optionKey);
+        } else {
+            self::$aSiteJWTOptions = get_site_option(self::$optionKey);
+        }
+        
+        return self::$aSiteJWTOptions;
     }
     
     /**
@@ -111,7 +125,7 @@ class Option
      */
     public static function saveJWTSettings($val)
     {
-        if (is_network_admin()) {
+        if (is_main_site()) {
             update_site_option(self::$optionKey, $val);
         } else {
             update_option(self::$optionKey, $val);
