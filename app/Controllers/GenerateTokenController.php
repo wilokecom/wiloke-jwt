@@ -4,6 +4,7 @@ namespace WilokeJWT\Controllers;
 
 use Exception;
 use Firebase\JWT\JWT;
+use HSBlogCore\Helpers\Cookie;
 use HSBlogCore\Helpers\Session;
 use WilokeJWT\Core\Core;
 use WilokeJWT\Helpers\Option;
@@ -278,16 +279,18 @@ final class GenerateTokenController extends Core
     }
     
     /**
-     * @param $aStatus
-     * @param $refreshToken
+     * @param        $aStatus
+     * @param        $refreshToken
+     * @param string $oldAccessToken
      *
      * @return array
      */
-    public function filterRenewAccessToken($aStatus, $refreshToken)
+    public function filterRenewAccessToken($aStatus, $refreshToken, $oldAccessToken = '')
     {
         try {
             $oUserInfo   = $this->verifyToken($refreshToken, 'refresh_token');
-            $accessToken = Option::getUserToken($oUserInfo->userID);
+            $accessToken = !empty($oldAccessToken) ? $oldAccessToken : Option::getUserToken($oUserInfo->userID);
+            
             if ($this->isAccessTokenExpired($accessToken)) {
                 return [
                     'accessToken' => $this->renewAccessToken($refreshToken),

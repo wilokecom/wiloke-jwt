@@ -45,7 +45,7 @@ class Option
      */
     public static function getSiteJWTSettings()
     {
-        if (!is_multisite() || !is_main_site()) {
+        if (!is_multisite() || !is_network_admin()) {
             self::$aSiteJWTOptions = get_option(self::$optionKey);
         } else {
             self::$aSiteJWTOptions = get_site_option(self::$optionKey);
@@ -125,7 +125,7 @@ class Option
      */
     public static function saveJWTSettings($val)
     {
-        if (is_main_site()) {
+        if (is_network_admin()) {
             update_site_option(self::$optionKey, $val);
         } else {
             update_option(self::$optionKey, $val);
