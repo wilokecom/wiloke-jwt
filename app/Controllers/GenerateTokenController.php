@@ -4,6 +4,7 @@ namespace WilokeJWT\Controllers;
 
 use Exception;
 use Firebase\JWT\JWT;
+use HSBlogCore\Helpers\Cookie;
 use HSBlogCore\Helpers\Session;
 use WilokeJWT\Core\Core;
 use WilokeJWT\Helpers\Option;
@@ -26,12 +27,12 @@ final class GenerateTokenController extends Core
         add_action('wp_login', [$this, 'handleTokenAfterUserSignedIn'], 10, 2);
         add_action('admin_init', [$this, 'fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe']);
         add_action('wiloke-jwt/created-access-token', [$this, 'storeAccessTokenToCookie'], 10, 3);
-//        add_action('clear_auth_cookie', [$this, 'removeAccessTokenAfterLogout']);
+        //        add_action('clear_auth_cookie', [$this, 'removeAccessTokenAfterLogout']);
         add_action('user_register', [$this, 'createRefreshTokenAfterUserRegisteredAccount']);
         add_filter('wiloke/filter/get-refresh-token', [$this, 'getUserRefreshToken']);
         add_filter('wiloke/filter/revoke-access-token', [$this, 'filterRevokeAccessToken'], 10, 2);
         add_filter('wiloke/filter/revoke-refresh-access-token', [$this, 'filterRevokeRefreshAccessToken'], 10, 2);
-        add_filter('wiloke/filter/renew-access-token', [$this, 'filterRenewAccessToken'], 10, 2);
+        add_filter('wiloke/filter/renew-access-token', [$this, 'filterRenewAccessToken'], 10, 3);
         add_filter('wiloke/filter/is-access-token-expired', [$this, 'filterIsTokenExpired'], 10, 2);
         add_action('clean_user_cache', [$this, 'maybeRevokeRefreshPasswordAfterUpdatingUser'], 10, 2);
         add_action('delete_user', [$this, 'deleteTokensBeforeDeletingUser'], 10);
@@ -224,6 +225,7 @@ final class GenerateTokenController extends Core
         }
         $this->handlingUserLogin = true;
         $refreshToken            = Option::getUserRefreshToken($oUser->ID);
+       
         $accessToken             = '';
         
         if (empty($refreshToken)) {
@@ -278,19 +280,33 @@ final class GenerateTokenController extends Core
     }
     
     /**
-     * @param $aStatus
-     * @param $refreshToken
+     * @param        $aStatus
+     * @param        $refreshToken
+     * @param string $oldAccessToken
      *
      * @return array
      */
-    public function filterRenewAccessToken($aStatus, $refreshToken)
+    public function filterRenewAccessToken($aStatus, $refreshToken, $oldAccessToken = '')
     {
         try {
-            $oUserInfo   = $this->verifyToken($refreshToken, 'refresh_token');
-            $accessToken = Option::getUserToken($oUserInfo->userID);
+            $oUserInfo = $this->verifyToken($refreshToken, 'refresh_token');
+        } catch (\Exception $e) {
+            return [
+                'error' => [
+                    'message'    => esc_html__('Invalid refresh token', 'hsblog-core'),
+                    'code'       => 400,
+                    'statusCode' => 'INVALID_REFRESH_TOKEN'
+                ]
+            ];
+        }
+        
+        try {
+            $accessToken = !empty($oldAccessToken) ? $oldAccessToken : Option::getUserToken($oUserInfo->userID);
+            
             if ($this->isAccessTokenExpired($accessToken)) {
                 return [
-                    'accessToken' => $this->renewAccessToken($refreshToken)
+                    'accessToken' => $this->renewAccessToken($refreshToken),
+                    'userID'      => $oUserInfo->userID
                 ];
             } else {
                 return [
