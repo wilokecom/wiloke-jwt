@@ -15,6 +15,7 @@ License URI: https://www.gnu.org/licenses/gpl-3.0.txt
 require_once plugin_dir_path(__FILE__).'vendor/autoload.php';
 
 define('WILOKE_JWT_VIEWS', plugin_dir_path(__FILE__) . 'app/Views/');
+define('INVALID_REFRESH_TOKEN', 'INVALID_REFRESH_TOKEN');
 
 if (is_admin()) {
     new \WilokeJWT\Controllers\AdminMenuController();
