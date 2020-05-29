@@ -142,14 +142,13 @@ class Core
             } else {
                 if ($type === 'refresh_token') {
                     $currentToken = Option::getUserRefreshToken($oUser->userID);
-                    //                } else {
-                    //                    $currentToken = Option::getUserToken($oUser->userID);
                     
                     if ($token !== $currentToken) {
                         $errMsg = esc_html__('The token has been expired', 'wiloke-jwt');
                     }
                 }
             }
+            
         } catch (Exception $oE) {
             $errMsg = $oE->getMessage();
         }

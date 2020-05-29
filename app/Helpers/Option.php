@@ -37,6 +37,10 @@ class Option
             ]
         );
         
+        if (empty($aOptions)) {
+            self::$aJWTOptions['isDefault'] = true;
+        }
+        
         return self::$aJWTOptions;
     }
     
@@ -140,11 +144,13 @@ class Option
     private static function safeGetUserId($userID)
     {
         if (empty($userID)) {
-            if (!current_user_can('administrator')) {
+            global $current_user;
+            if (!$current_user instanceof \WP_User || $current_user->ID === 0 ||
+                !in_array('administrator', $current_user->roles)) {
                 return false;
             }
             
-            $userID = get_current_user_id();
+            $userID = $current_user->ID;
         }
         
         return $userID;
