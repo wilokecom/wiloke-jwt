@@ -21,10 +21,22 @@ if (is_admin()) {
     new \WilokeJWT\Controllers\AdminMenuController();
 }
 
-register_activation_hook(__FILE__, 'wilokeJWTSetupDefault');
+/**
+ * @var $oGenerateTokenController WilokeJWT\Controllers\GenerateTokenController
+ */
+global $oGenerateTokenController;
 
+$oGenerateTokenController = new \WilokeJWT\Controllers\GenerateTokenController();
+$oVerifyTokenController   = new \WilokeJWT\Controllers\VerifyTokenController();
+
+register_activation_hook(__FILE__, 'wilokeJWTSetupDefault');
 function wilokeJWTSetupDefault()
 {
+    /**
+     * @var $oGenerateTokenController \WilokeJWT\Controllers\GenerateTokenController
+     */
+    global $oGenerateTokenController, $current_user;
+    
     $aOptions = \WilokeJWT\Helpers\Option::getJWTSettings();
     if (isset($aOptions['isDefault'])) {
         \WilokeJWT\Helpers\Option::saveJWTSettings(
@@ -35,8 +47,10 @@ function wilokeJWTSetupDefault()
                 'is_test_mode'       => 'no'
             ]
         );
+        
+        try {
+            $oGenerateTokenController->createRefreshTokenAfterUserRegisteredAccount($current_user->ID);
+        } catch (Exception $e) {
+        }
     }
 }
-
-new \WilokeJWT\Controllers\GenerateTokenController();
-new \WilokeJWT\Controllers\VerifyTokenController();
