@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Wiloke JSW
-Description: An useful plugin for WordPress Rest API
+Description: A useful plugin for WordPress Rest API
 Version: 1.0
 Text Domain: wiloke-jwt
 Domain Path: /lang
@@ -14,11 +14,28 @@ License URI: https://www.gnu.org/licenses/gpl-3.0.txt
 
 require_once plugin_dir_path(__FILE__).'vendor/autoload.php';
 
-define('WILOKE_JWT_VIEWS', plugin_dir_path(__FILE__) . 'app/Views/');
+define('WILOKE_JWT_VIEWS', plugin_dir_path(__FILE__).'app/Views/');
 define('INVALID_REFRESH_TOKEN', 'INVALID_REFRESH_TOKEN');
 
 if (is_admin()) {
     new \WilokeJWT\Controllers\AdminMenuController();
+}
+
+register_activation_hook(__FILE__, 'wilokeJWTSetupDefault');
+
+function wilokeJWTSetupDefault()
+{
+    $aOptions = \WilokeJWT\Helpers\Option::getJWTSettings();
+    if (isset($aOptions['isDefault'])) {
+        \WilokeJWT\Helpers\Option::saveJWTSettings(
+            [
+                'token_expiry'       => 10,
+                'test_token_expired' => '',
+                'key'                => uniqid('wiloke_jwt_'),
+                'is_test_mode'       => 'no'
+            ]
+        );
+    }
 }
 
 new \WilokeJWT\Controllers\GenerateTokenController();

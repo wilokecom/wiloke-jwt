@@ -37,6 +37,10 @@ class Option
             ]
         );
         
+        if (empty($aOptions)) {
+            self::$aJWTOptions['isDefault'] = true;
+        }
+        
         return self::$aJWTOptions;
     }
     
