@@ -199,6 +199,10 @@ final class GenerateTokenController extends Core
      */
     public function createRefreshTokenAfterUserRegisteredAccount($userId, $isDirectly = false)
     {
+        if (isset($_GET['import']) && $_GET['import'] == 'wordpress') {
+            return false;
+        }
+
         if (empty($userId)) {
             return $aResponse = [
                 'error' => [
