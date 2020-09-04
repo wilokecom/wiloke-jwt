@@ -25,7 +25,7 @@ final class GenerateTokenController extends Core
     {
         add_action('set_logged_in_cookie', [$this, 'handleTokenAfterUserSetLoggedInCookie'], 10, 4);
         add_action('wp_login', [$this, 'handleTokenAfterUserSignedIn'], 10, 2);
-        add_action('admin_init', [$this, 'fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe']);
+        //        add_action('admin_init', [$this, 'fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe']);
         add_action('wiloke-jwt/created-access-token', [$this, 'storeAccessTokenToCookie'], 10, 3);
         //        add_action('clear_auth_cookie', [$this, 'removeAccessTokenAfterLogout']);
         add_action('user_register', [$this, 'createRefreshTokenAfterUserRegisteredAccount']);
@@ -36,6 +36,28 @@ final class GenerateTokenController extends Core
         add_filter('wiloke/filter/is-access-token-expired', [$this, 'filterIsTokenExpired'], 10, 2);
         add_action('clean_user_cache', [$this, 'maybeRevokeRefreshPasswordAfterUpdatingUser'], 10, 2);
         add_action('delete_user', [$this, 'deleteTokensBeforeDeletingUser'], 10);
+        add_action('admin_init', [$this, 'autoGenerateTokenAfterActivatingPlugin']);
+    }
+    
+    function autoGenerateTokenAfterActivatingPlugin()
+    {
+        /**
+         * @var $oGenerateTokenController \WilokeJWT\Controllers\GenerateTokenController
+         */
+        global $current_user;
+        $aOptions = Option::getJWTSettings();
+        
+        if (isset($aOptions['isDefault'])) {
+            Option::saveJWTSettings($aOptions);
+            
+            try {
+                $this->createRefreshTokenAfterUserRegisteredAccount(
+                    $current_user->ID,
+                    true
+                );
+            } catch (Exception $e) {
+            }
+        }
     }
     
     /**
@@ -170,28 +192,56 @@ final class GenerateTokenController extends Core
     }
     
     /**
-     * @param $userId
+     * @param      $userId
+     * @param bool $isDirectly
      *
-     * @return bool|WP_User
-     * @throws Exception
+     * @return array
      */
-    public function createRefreshTokenAfterUserRegisteredAccount($userId)
+    public function createRefreshTokenAfterUserRegisteredAccount($userId, $isDirectly = false)
     {
         if (empty($userId)) {
-            return false;
+            return $aResponse = [
+                'error' => [
+                    'messages' => 'Invalid User Id',
+                    'code'     => 400
+                ]
+            ];
         }
         
         $oUser = new WP_User($userId);
         
         if (empty($oUser) || is_wp_error($oUser)) {
-            return $oUser;
+            return $aResponse = [
+                'error' => [
+                    'message' => 'Invalid User',
+                    'code'    => 400
+                ]
+            ];
         }
         
         $refreshToken = $this->generateRefreshToken($oUser);
         if (!empty($refreshToken)) {
-            $this->renewAccessToken($refreshToken);
-            do_action('wiloke-jwt/created-refresh-token', $refreshToken, $userId, $oUser);
+            try {
+                $accessToken = $this->renewAccessToken($refreshToken);
+                $aResponse   = [
+                    'accessToken'  => $accessToken,
+                    'refreshToken' => $refreshToken,
+                    'userId'       => $userId,
+                    'oUser'        => $oUser,
+                    'isDirectly'   => $isDirectly
+                ];
+                do_action('wiloke-jwt/created-refresh-token', $aResponse);
+            } catch (\Exception $exception) {
+                $aResponse = [
+                    'error' => [
+                        'message' => $exception->getMessage(),
+                        'code'    => 400
+                    ]
+                ];
+            }
         }
+        
+        return $aResponse;
     }
     
     /**
@@ -225,8 +275,8 @@ final class GenerateTokenController extends Core
         }
         $this->handlingUserLogin = true;
         $refreshToken            = Option::getUserRefreshToken($oUser->ID);
-       
-        $accessToken             = '';
+        
+        $accessToken = '';
         
         if (empty($refreshToken)) {
             $this->generateRefreshToken($oUser);
@@ -293,7 +343,7 @@ final class GenerateTokenController extends Core
         } catch (\Exception $e) {
             return [
                 'error' => [
-                    'message'    => esc_html__('Invalid refresh token', 'hsblog-core'),
+                    'message'    => $e->getMessage(),
                     'code'       => 400,
                     'statusCode' => 'INVALID_REFRESH_TOKEN'
                 ]
