@@ -288,7 +288,7 @@ final class GenerateTokenController extends Core
             try {
                 $this->verifyToken($refreshToken, 'refresh_token');
             } catch (Exception $exception) {
-	            echo $exception->getMessage();die;
+                $this->generateRefreshToken($oUser);
             }
 
             $accessToken = Option::getUserToken($oUser->ID);
