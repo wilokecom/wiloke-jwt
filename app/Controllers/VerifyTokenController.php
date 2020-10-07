@@ -62,7 +62,8 @@ final class VerifyTokenController extends Core
                     'description' => esc_html__('The password is required', 'wiloke-jwt')
                 ]
             ],
-            'callback' => [$this, 'signIn']
+            'callback' => [$this, 'signIn'],
+            'permission_callback' => '__return_true'
         ]);
     }
 
