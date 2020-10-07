@@ -21,22 +21,10 @@ if (is_admin()) {
     new \WilokeJWT\Controllers\AdminMenuController();
 }
 
-register_activation_hook(__FILE__, 'wilokeJWTSetupDefault');
+/**
+ * @var $oGenerateTokenController WilokeJWT\Controllers\GenerateTokenController
+ */
+global $oGenerateTokenController;
 
-function wilokeJWTSetupDefault()
-{
-    $aOptions = \WilokeJWT\Helpers\Option::getJWTSettings();
-    if (isset($aOptions['isDefault'])) {
-        \WilokeJWT\Helpers\Option::saveJWTSettings(
-            [
-                'token_expiry'       => 10,
-                'test_token_expired' => '',
-                'key'                => uniqid('wiloke_jwt_'),
-                'is_test_mode'       => 'no'
-            ]
-        );
-    }
-}
-
-new \WilokeJWT\Controllers\GenerateTokenController();
-new \WilokeJWT\Controllers\VerifyTokenController();
+$oGenerateTokenController = new \WilokeJWT\Controllers\GenerateTokenController();
+$oVerifyTokenController   = new \WilokeJWT\Controllers\VerifyTokenController();

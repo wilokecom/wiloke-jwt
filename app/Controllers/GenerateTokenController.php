@@ -17,7 +17,7 @@ use WP_User;
 final class GenerateTokenController extends Core
 {
     private $handlingUserLogin = false;
-    
+
     /**
      * GenerateTokenController constructor.
      */
@@ -25,7 +25,7 @@ final class GenerateTokenController extends Core
     {
         add_action('set_logged_in_cookie', [$this, 'handleTokenAfterUserSetLoggedInCookie'], 10, 4);
         add_action('wp_login', [$this, 'handleTokenAfterUserSignedIn'], 10, 2);
-        add_action('admin_init', [$this, 'fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe']);
+        //        add_action('admin_init', [$this, 'fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe']);
         add_action('wiloke-jwt/created-access-token', [$this, 'storeAccessTokenToCookie'], 10, 3);
         //        add_action('clear_auth_cookie', [$this, 'removeAccessTokenAfterLogout']);
         add_action('user_register', [$this, 'createRefreshTokenAfterUserRegisteredAccount']);
@@ -36,8 +36,30 @@ final class GenerateTokenController extends Core
         add_filter('wiloke/filter/is-access-token-expired', [$this, 'filterIsTokenExpired'], 10, 2);
         add_action('clean_user_cache', [$this, 'maybeRevokeRefreshPasswordAfterUpdatingUser'], 10, 2);
         add_action('delete_user', [$this, 'deleteTokensBeforeDeletingUser'], 10);
+        add_action('init', [$this, 'autoGenerateTokenAfterActivatingPlugin'], 1);
     }
-    
+
+    function autoGenerateTokenAfterActivatingPlugin()
+    {
+        /**
+         * @var $oGenerateTokenController \WilokeJWT\Controllers\GenerateTokenController
+         */
+        global $current_user;
+        $aOptions = Option::getJWTSettings();
+
+        if (isset($aOptions['isDefault'])) {
+            Option::saveJWTSettings($aOptions);
+
+            try {
+                $this->createRefreshTokenAfterUserRegisteredAccount(
+                    $current_user->ID,
+                    true
+                );
+            } catch (Exception $e) {
+            }
+        }
+    }
+
     /**
      * @param $status
      * @param $accessToken
@@ -48,7 +70,7 @@ final class GenerateTokenController extends Core
     {
         return $this->isAccessTokenExpired($accessToken);
     }
-    
+
     /**
      * @param $userId
      *
@@ -58,7 +80,7 @@ final class GenerateTokenController extends Core
     {
         return $this->revokeAccessToken($userId);
     }
-    
+
     /**
      * @param $status
      * @param $userId
@@ -69,7 +91,7 @@ final class GenerateTokenController extends Core
     {
         return $this->revokeAccessToken($userId);
     }
-    
+
     /**
      * @param $userID
      */
@@ -77,7 +99,7 @@ final class GenerateTokenController extends Core
     {
         $this->revokeRefreshAccessToken($userID);
     }
-    
+
     /**
      * @param         $userID
      * @param WP_User $oUser
@@ -91,7 +113,7 @@ final class GenerateTokenController extends Core
             return $this->filterRevokeRefreshAccessToken(null, $token);
         }
     }
-    
+
     /**
      * @param $status
      * @param $token
@@ -103,26 +125,26 @@ final class GenerateTokenController extends Core
         try {
             $oUserInfo = $this->verifyToken($token, 'refresh_token');
             $this->revokeRefreshAccessToken($oUserInfo->userID);
-            $oUser        = new WP_User($oUserInfo->userID);
+            $oUser = new WP_User($oUserInfo->userID);
             $refreshToken = $this->generateRefreshToken($oUser);
-            $accessToken  = $this->generateToken($oUser);
-            
+            $accessToken = $this->generateToken($oUser);
+
             return [
                 'data' => [
                     'refreshToken' => $refreshToken,
-                    'accessToken'  => $accessToken
+                    'accessToken' => $accessToken
                 ]
             ];
         } catch (Exception $exception) {
             return [
                 'error' => [
                     'message' => $exception->getMessage(),
-                    'code'    => 401
+                    'code' => 401
                 ]
             ];
         }
     }
-    
+
     /**
      * @param $token
      * @param $ignoreSetCookie
@@ -134,9 +156,9 @@ final class GenerateTokenController extends Core
         if ($ignoreSetCookie) {
             return false;
         }
-        
+
         $host = parse_url(home_url('/'), PHP_URL_HOST);
-        
+
         setcookie(
             'wiloke_my_jwt',
             $token,
@@ -146,7 +168,7 @@ final class GenerateTokenController extends Core
             is_ssl()
         );
     }
-    
+
     public function fixGenerateTokenIfUserLoggedIntoSiteBeforeInstallingMe()
     {
         if (current_user_can('administrator')) {
@@ -156,7 +178,7 @@ final class GenerateTokenController extends Core
             }
         }
     }
-    
+
     /**
      * @param string $userId
      *
@@ -165,35 +187,67 @@ final class GenerateTokenController extends Core
     public function getUserRefreshToken($userId = '')
     {
         $userId = !empty($userId) ? $userId : get_current_user_id();
-        
+
         return Option::getUserRefreshToken($userId);
     }
-    
+
     /**
-     * @param $userId
+     * @param      $userId
+     * @param bool $isDirectly
      *
-     * @return bool|WP_User
-     * @throws Exception
+     * @return array
      */
-    public function createRefreshTokenAfterUserRegisteredAccount($userId)
+    public function createRefreshTokenAfterUserRegisteredAccount($userId, $isDirectly = false)
     {
-        if (empty($userId)) {
+        if (isset($_GET['import']) && $_GET['import'] == 'wordpress') {
             return false;
         }
-        
-        $oUser = new WP_User($userId);
-        
-        if (empty($oUser) || is_wp_error($oUser)) {
-            return $oUser;
+
+        if (empty($userId)) {
+            return $aResponse = [
+                'error' => [
+                    'messages' => 'Invalid User Id',
+                    'code' => 400
+                ]
+            ];
         }
-        
+
+        $oUser = new WP_User($userId);
+
+        if (empty($oUser) || is_wp_error($oUser)) {
+            return $aResponse = [
+                'error' => [
+                    'message' => 'Invalid User',
+                    'code' => 400
+                ]
+            ];
+        }
+
         $refreshToken = $this->generateRefreshToken($oUser);
         if (!empty($refreshToken)) {
-            $this->renewAccessToken($refreshToken);
-            do_action('wiloke-jwt/created-refresh-token', $refreshToken, $userId, $oUser);
+            try {
+                $accessToken = $this->renewAccessToken($refreshToken);
+                $aResponse = [
+                    'accessToken' => $accessToken,
+                    'refreshToken' => $refreshToken,
+                    'userId' => $userId,
+                    'oUser' => $oUser,
+                    'isDirectly' => $isDirectly
+                ];
+                do_action('wiloke-jwt/created-refresh-token', $aResponse);
+            } catch (\Exception $exception) {
+                $aResponse = [
+                    'error' => [
+                        'message' => $exception->getMessage(),
+                        'code' => 400
+                    ]
+                ];
+            }
         }
+
+        return $aResponse;
     }
-    
+
     /**
      * @param $logged_in_cookie
      * @param $expire
@@ -207,11 +261,11 @@ final class GenerateTokenController extends Core
         if ($this->handlingUserLogin) {
             return false;
         }
-        
+
         $oUser = new WP_User($user_id);
         $this->handleTokenAfterUserSignedIn($oUser->user_email, $oUser);
     }
-    
+
     /**
      * @param $userEmail
      * @param $oUser
@@ -224,35 +278,35 @@ final class GenerateTokenController extends Core
             return false;
         }
         $this->handlingUserLogin = true;
-        $refreshToken            = Option::getUserRefreshToken($oUser->ID);
-       
-        $accessToken             = '';
-        
+        $refreshToken = Option::getUserRefreshToken($oUser->ID);
+
+        $accessToken = '';
+
         if (empty($refreshToken)) {
             $this->generateRefreshToken($oUser);
         } else {
             try {
                 $this->verifyToken($refreshToken, 'refresh_token');
             } catch (Exception $exception) {
-                $this->generateRefreshToken($oUser);
+	            echo $exception->getMessage();die;
             }
-            
+
             $accessToken = Option::getUserToken($oUser->ID);
         }
-        
+
         try {
             $this->verifyToken($accessToken);
-            
+
             if (Option::isTestMode()) {
                 $refreshToken = Option::getUserRefreshToken($oUser->ID);
-                $accessToken  = $this->renewAccessToken($refreshToken);
+                $accessToken = $this->renewAccessToken($refreshToken);
                 $this->storeAccessTokenToCookie($accessToken);
             }
-            
+
             return true;
         } catch (Exception $exception) {
             $refreshToken = Option::getUserRefreshToken($oUser->ID);
-            
+
             if (!empty($refreshToken)) {
                 try {
                     $accessToken = $this->renewAccessToken($refreshToken);
@@ -261,11 +315,11 @@ final class GenerateTokenController extends Core
                     return false;
                 }
             }
-            
+
             return false;
         }
     }
-    
+
     /**
      * @param $userID
      *
@@ -275,10 +329,10 @@ final class GenerateTokenController extends Core
     public function generateTokenAfterCreatingAccount($userID)
     {
         $oUser = new WP_User($userID);
-        
+
         return $this->generateToken($oUser, true);
     }
-    
+
     /**
      * @param        $aStatus
      * @param        $refreshToken
@@ -293,34 +347,34 @@ final class GenerateTokenController extends Core
         } catch (\Exception $e) {
             return [
                 'error' => [
-                    'message'    => esc_html__('Invalid refresh token', 'hsblog-core'),
-                    'code'       => 400,
+                    'message' => $e->getMessage(),
+                    'code' => 400,
                     'statusCode' => 'INVALID_REFRESH_TOKEN'
                 ]
             ];
         }
-        
+
         try {
             $accessToken = !empty($oldAccessToken) ? $oldAccessToken : Option::getUserToken($oUserInfo->userID);
-            
+
             if ($this->isAccessTokenExpired($accessToken)) {
                 return [
                     'accessToken' => $this->renewAccessToken($refreshToken),
-                    'userID'      => $oUserInfo->userID
+                    'userID' => $oUserInfo->userID
                 ];
             } else {
                 return [
                     'error' => [
                         'message' => esc_html__('The renew token is freezed', 'hsblog-core'),
-                        'code'    => 403
+                        'code' => 403
                     ]
                 ];
             }
         } catch (Exception $e) {
             return [
                 'error' => [
-                    'message'    => $e->getMessage(),
-                    'code'       => 401,
+                    'message' => $e->getMessage(),
+                    'code' => 401,
                     'statusCode' => 'TOKEN_EXPIRED'
                 ]
             ];

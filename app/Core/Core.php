@@ -142,7 +142,6 @@ class Core
             } else {
                 if ($type === 'refresh_token') {
                     $currentToken = Option::getUserRefreshToken($oUser->userID);
-                    
                     if ($token !== $currentToken) {
                         $errMsg = esc_html__('The token has been expired', 'wiloke-jwt');
                     }
@@ -242,7 +241,7 @@ class Core
             'message' => $this->generateTokenMsg($oUser),
             'exp'     => Option::getRefreshAccessTokenExp()
         ];
-        
+
         $encoded = JWT::encode($aPayload, Option::getRefreshTokenKey());
         Option::saveUserRefreshToken($encoded, $oUser->ID);
         
