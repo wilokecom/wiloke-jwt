@@ -36,28 +36,29 @@ final class GenerateTokenController extends Core
         add_filter('wiloke/filter/is-access-token-expired', [$this, 'filterIsTokenExpired'], 10, 2);
         add_action('clean_user_cache', [$this, 'maybeRevokeRefreshPasswordAfterUpdatingUser'], 10, 2);
         add_action('delete_user', [$this, 'deleteTokensBeforeDeletingUser'], 10);
-        add_action('init', [$this, 'autoGenerateTokenAfterActivatingPlugin'], 1);
+	    add_action('init', [$this, 'autoGenerateTokenAfterActivatingPlugin'], 1);
     }
 
     function autoGenerateTokenAfterActivatingPlugin()
     {
-        /**
-         * @var $oGenerateTokenController \WilokeJWT\Controllers\GenerateTokenController
-         */
-        global $current_user;
-        $aOptions = Option::getJWTSettings();
-
-        if (isset($aOptions['isDefault'])) {
-            Option::saveJWTSettings($aOptions);
-
-            try {
-                $this->createRefreshTokenAfterUserRegisteredAccount(
-                    $current_user->ID,
-                    true
-                );
-            } catch (Exception $e) {
-            }
-        }
+	    /**
+	     * @var $oGenerateTokenController \WilokeJWT\Controllers\GenerateTokenController
+	     */
+	    global $current_user;
+	    $aOptions = Option::getJWTSettings();
+	    $this->storeAccessTokenToCookie(Option::getUserAccessToken(get_current_user_id()));
+	    $this->storeAccessTokenToCookie(Option::getUserRefreshToken(get_current_user_id()),false,'wiloke_my_rf_token');
+	    if (isset($aOptions['isDefault'])) {
+		    Option::saveJWTSettings($aOptions);
+		    try {
+			    $this->createRefreshTokenAfterUserRegisteredAccount(
+				    $current_user->ID,
+				    true
+			    );
+		    }
+		    catch (Exception $e) {
+		    }
+	    }
     }
 
     /**
@@ -145,27 +146,28 @@ final class GenerateTokenController extends Core
         }
     }
 
-    /**
-     * @param $token
-     * @param $ignoreSetCookie
-     *
-     * @return bool
-     */
-    public function storeAccessTokenToCookie($token, $ignoreSetCookie = false)
-    {
-        if ($ignoreSetCookie) {
-            return false;
-        }
+	/**
+	 * @param $token
+	 * @param $ignoreSetCookie
+	 * @param $name
+	 *
+	 * @return bool
+	 */
+	public function storeAccessTokenToCookie($token, $ignoreSetCookie = false, $name = 'wiloke_my_jwt')
+	{
+		if ($ignoreSetCookie) {
+			return false;
+		}
 
-        $host = parse_url(home_url('/'), PHP_URL_HOST);
+		$host = parse_url(home_url('/'), PHP_URL_HOST);
 
-        setcookie(
-            'wiloke_my_jwt',
-            $token,
-            $this->getTokenExpired(),
-            '/',
-            $host,
-            is_ssl()
+		setcookie(
+			$name,
+			$token,
+			$this->getTokenExpired(),
+			'/',
+			$host,
+			is_ssl()
         );
     }
 
@@ -226,15 +228,15 @@ final class GenerateTokenController extends Core
         $refreshToken = $this->generateRefreshToken($oUser);
         if (!empty($refreshToken)) {
             try {
-                $accessToken = $this->renewAccessToken($refreshToken);
-                $aResponse = [
-                    'accessToken' => $accessToken,
-                    'refreshToken' => $refreshToken,
-                    'userId' => $userId,
-                    'oUser' => $oUser,
-                    'isDirectly' => $isDirectly
-                ];
-                do_action('wiloke-jwt/created-refresh-token', $aResponse);
+	            $accessToken = $this->renewAccessToken($refreshToken);
+	            $aResponse = [
+		            'accessToken'  => $accessToken,
+		            'refreshToken' => $refreshToken,
+		            'userId'       => $userId,
+		            'oUser'        => $oUser,
+		            'isDirectly'   => $isDirectly
+	            ];
+	            do_action('wiloke-jwt/created-refresh-token', $aResponse);
             } catch (\Exception $exception) {
                 $aResponse = [
                     'error' => [
@@ -279,9 +281,7 @@ final class GenerateTokenController extends Core
         }
         $this->handlingUserLogin = true;
         $refreshToken = Option::getUserRefreshToken($oUser->ID);
-
         $accessToken = '';
-
         if (empty($refreshToken)) {
             $this->generateRefreshToken($oUser);
         } else {
@@ -290,19 +290,16 @@ final class GenerateTokenController extends Core
             } catch (Exception $exception) {
                 $this->generateRefreshToken($oUser);
             }
-
             $accessToken = Option::getUserToken($oUser->ID);
         }
 
         try {
             $this->verifyToken($accessToken);
-
             if (Option::isTestMode()) {
                 $refreshToken = Option::getUserRefreshToken($oUser->ID);
                 $accessToken = $this->renewAccessToken($refreshToken);
                 $this->storeAccessTokenToCookie($accessToken);
             }
-
             return true;
         } catch (Exception $exception) {
             $refreshToken = Option::getUserRefreshToken($oUser->ID);
