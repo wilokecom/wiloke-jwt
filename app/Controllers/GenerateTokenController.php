@@ -30,6 +30,7 @@ final class GenerateTokenController extends Core
         //        add_action('clear_auth_cookie', [$this, 'removeAccessTokenAfterLogout']);
         add_action('user_register', [$this, 'createRefreshTokenAfterUserRegisteredAccount']);
         add_filter('wiloke/filter/get-refresh-token', [$this, 'getUserRefreshToken']);
+        add_filter('wiloke-jwt/created-access-token', [$this, 'storeTokenToCookie']);
         add_filter('wiloke/filter/revoke-access-token', [$this, 'filterRevokeAccessToken'], 10, 2);
         add_filter('wiloke/filter/revoke-refresh-access-token', [$this, 'filterRevokeRefreshAccessToken'], 10, 2);
         add_filter('wiloke/filter/renew-access-token', [$this, 'filterRenewAccessToken'], 10, 3);
@@ -38,7 +39,19 @@ final class GenerateTokenController extends Core
         add_action('delete_user', [$this, 'deleteTokensBeforeDeletingUser'], 10);
 	    add_action('init', [$this, 'autoGenerateTokenAfterActivatingPlugin'], 1);
     }
-
+    /*
+     * @return true
+     */
+    function storeTokenToCookie($aToken=null){
+    if (empty($aToken)){
+        $this->storeAccessTokenToCookie(Option::getUserAccessToken(get_current_user_id()));
+        $this->storeAccessTokenToCookie(Option::getUserRefreshToken(get_current_user_id()),false,'wiloke_my_rf_token');
+    }else{
+        $this->storeAccessTokenToCookie($aToken['accessToken']);
+        $this->storeAccessTokenToCookie($aToken['refreshToken'],false,'wiloke_my_rf_token');
+    }
+    return true;
+    }
     function autoGenerateTokenAfterActivatingPlugin()
     {
 	    /**
@@ -46,8 +59,7 @@ final class GenerateTokenController extends Core
 	     */
 	    global $current_user;
 	    $aOptions = Option::getJWTSettings();
-	    $this->storeAccessTokenToCookie(Option::getUserAccessToken(get_current_user_id()));
-	    $this->storeAccessTokenToCookie(Option::getUserRefreshToken(get_current_user_id()),false,'wiloke_my_rf_token');
+	    $this->storeTokenToCookie();
 	    if (isset($aOptions['isDefault'])) {
 		    Option::saveJWTSettings($aOptions);
 		    try {
