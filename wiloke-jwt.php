@@ -12,13 +12,21 @@ License: GPL3
 License URI: https://www.gnu.org/licenses/gpl-3.0.txt
 */
 
-require_once plugin_dir_path(__FILE__).'vendor/autoload.php';
+use WilokeJWT\Controllers\UserProfileController;
 
-define('WILOKE_JWT_VIEWS', plugin_dir_path(__FILE__).'app/Views/');
+require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
+
+define('WILOKE_JWT_API_NAMESPACE', 'wiloke-jwt');
+define('WILOKE_JWT_API_VERSION', 'v1');
+define('WILOKE_JWT_API', WILOKE_JWT_API_NAMESPACE . '/' . WILOKE_JWT_API_VERSION);
+define('WILOKE_JWT_VIEWS', plugin_dir_path(__FILE__) . 'app/Views/');
 define('INVALID_REFRESH_TOKEN', 'INVALID_REFRESH_TOKEN');
+define('WILOKE_JWT_VERSION', 1.0);
+define('WILOKE_JWT_URL', plugin_dir_url(__FILE__));
+define('WILOKE_JWT_PATH', plugin_dir_path(__FILE__));
 
 if (is_admin()) {
-    new \WilokeJWT\Controllers\AdminMenuController();
+	new \WilokeJWT\Controllers\AdminMenuController();
 }
 
 /**
@@ -27,4 +35,5 @@ if (is_admin()) {
 global $oGenerateTokenController;
 
 $oGenerateTokenController = new \WilokeJWT\Controllers\GenerateTokenController();
-$oVerifyTokenController   = new \WilokeJWT\Controllers\VerifyTokenController();
+$oVerifyTokenController = new \WilokeJWT\Controllers\VerifyTokenController();
+new UserProfileController;
