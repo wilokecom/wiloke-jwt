@@ -94,7 +94,7 @@ final class GenerateTokenController extends Core
      *
      * @return bool
      */
-    public function storeAccessTokenToCookie($token, $ignoreSetCookie = false)
+    public function storeAccessTokenToCookie($token, $ignoreSetCookie = false):bool
     {
         if ($ignoreSetCookie) {
             return false;
