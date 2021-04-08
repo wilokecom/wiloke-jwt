@@ -14,7 +14,8 @@ export default {
     data() {
         return {
             formState: {
-                app_name: ''
+                app_name: '',
+                capabilities: []
             }
         }
     },
