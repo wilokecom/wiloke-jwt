@@ -50,7 +50,8 @@ final class LoginController
 		return MessageFactory::factory('rest')->success(
 			'The code has been generated',
 			[
-				'code' => PreLoginModel::getCode($ID)
+				'code'           => PreLoginModel::getCode($ID),
+				'client_session' => $oRequest->get_param('client_session')
 			]
 		);
 	}
