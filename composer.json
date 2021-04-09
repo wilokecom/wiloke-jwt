@@ -4,7 +4,16 @@
       "WilokeJWT\\": "app/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "WilokeJWTTest\\": "tests/"
+    }
+  },
   "require": {
     "firebase/php-jwt": "^5.0"
+  },
+  "require-dev": {
+    "wilokecom/phpcli": "^1.28",
+    "phpunit/phpunit": "^7.2"
   }
 }

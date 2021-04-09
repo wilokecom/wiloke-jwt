@@ -12,7 +12,10 @@ License: GPL3
 License URI: https://www.gnu.org/licenses/gpl-3.0.txt
 */
 
+use WilokeJWT\Controllers\LoginController;
+use WilokeJWT\Controllers\PostTypeRegistry;
 use WilokeJWT\Controllers\UserProfileController;
+use WilokeJWT\DB\BlackListTokensTbl;
 
 require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
 
@@ -26,7 +29,7 @@ define('WILOKE_JWT_URL', plugin_dir_url(__FILE__));
 define('WILOKE_JWT_PATH', plugin_dir_path(__FILE__));
 
 if (is_admin()) {
-	new \WilokeJWT\Controllers\AdminMenuController();
+//	new \WilokeJWT\Controllers\AdminMenuController();
 }
 
 /**
@@ -34,6 +37,14 @@ if (is_admin()) {
  */
 global $oGenerateTokenController;
 
-$oGenerateTokenController = new \WilokeJWT\Controllers\GenerateTokenController();
-$oVerifyTokenController = new \WilokeJWT\Controllers\VerifyTokenController();
-new UserProfileController;
+//$oGenerateTokenController = new \WilokeJWT\Controllers\GenerateTokenController();
+//$oVerifyTokenController = new \WilokeJWT\Controllers\VerifyTokenController();
+//new UserProfileController;
+new PostTypeRegistry;
+new LoginController;
+
+register_activation_hook(__FILE__, function () {
+	do_action('wiloke_jwt_plugin_activated');
+	new BlackListTokensTbl;
+	new \WilokeJWT\DB\PreLoginTbl();
+});
