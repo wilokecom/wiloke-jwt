@@ -28,6 +28,16 @@ final class LoginController
 				'permission_callback' => '__return_true'
 			]
 		);
+
+		register_rest_route(
+			WILOKE_JWT_API,
+			'signin-with-wilcity',
+			[
+				'methods'             => 'POST',
+				'callback'            => [$this, 'generateCode'],
+				'permission_callback' => '__return_true'
+			]
+		);
 	}
 
 	public function generateCode(\WP_REST_Request $oRequest)
