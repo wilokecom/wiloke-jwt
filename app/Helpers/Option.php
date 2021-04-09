@@ -7,18 +7,16 @@ namespace WilokeJWT\Helpers;
  */
 class Option
 {
-	private static string $clientAppPublicKey    = 'wilokejwt_public_key';
-	private static string $clientAppSecretAppKey = 'wilokejwt_secret_key';
-	private static string $optionKey             = 'wilokejwt';
-	private static string $userTokenKey          = 'wilokejwt';
-	private static string $userRefreshTokenKey   = 'wilokerefreshjwt';
-	private static array  $aJWTOptions           = [];
-	private static array  $aSiteJWTOptions       = [];
+	private static string $optionKey           = 'wilokejwt';
+	private static string $userTokenKey        = 'wilokejwt';
+	private static string $userRefreshTokenKey = 'wilokerefreshjwt';
+	private static array  $aJWTOptions         = [];
+	private static array  $aSiteJWTOptions     = [];
 
 	/**
 	 * @return array
 	 */
-	public static function getJWTSettings()
+	public static function getJWTSettings(): array
 	{
 		if (!empty(self::$aJWTOptions)) {
 			return self::$aJWTOptions;
@@ -34,7 +32,7 @@ class Option
 			[
 				'token_expiry'       => 10,
 				'test_token_expired' => '',
-				'key'                => uniqid(self::$optionKey . '_'),
+				'key'                => uniqid(self::$optionKey.'_'),
 				'is_test_mode'       => 'no'
 			]
 		);
@@ -49,7 +47,7 @@ class Option
 	/**
 	 * @return mixed|void
 	 */
-	public static function getSiteJWTSettings()
+	public static function getSiteJWTSettings(): array
 	{
 		if (!is_multisite() || !is_network_admin()) {
 			self::$aSiteJWTOptions = get_option(self::$optionKey);
@@ -65,7 +63,7 @@ class Option
 	 *
 	 * @return mixed|string
 	 */
-	public static function getOptionField($field)
+	public static function getOptionField($field): string
 	{
 		self::getJWTSettings();
 
@@ -75,17 +73,17 @@ class Option
 	/**
 	 * @return string
 	 */
-	public static function getAccessTokenKey()
+	public static function getAccessTokenKey(): string
 	{
 		$key = self::getRefreshTokenKey();
 
-		return 'access_token_' . $key;
+		return 'access_token_'.$key;
 	}
 
 	/**
 	 * @return mixed|string
 	 */
-	public static function getRefreshTokenKey()
+	public static function getRefreshTokenKey(): string
 	{
 		$key = self::getOptionField('key');
 
@@ -117,57 +115,13 @@ class Option
 			$val = abs(Option::getOptionField('test_token_expired'));
 			$val = empty($val) ? 10 : $val;
 
-			return strtotime('+' . $val . ' seconds');
+			return strtotime('+'.$val.' seconds');
 		}
 
 		$val = abs(Option::getOptionField('token_expiry'));
 		$val = empty($val) ? 1 : $val;
 
-		return strtotime('+' . $val . ' hour');
-	}
-
-	public static function getClientAppTokenExpired(): int
-	{
-		return strtotime('+3650 days');
-	}
-
-	/**
-	 * @param int $postId
-	 * @return bool|mixed
-	 */
-	public static function getClientAppPublicToken(int $postId): bool
-	{
-		return (string)get_post_meta($postId, self::$clientAppPublicKey, true);
-	}
-
-
-	/**
-	 * @param int $postId
-	 * @param string $token
-	 * @return bool|mixed
-	 */
-	public static function setClientAppPublicToken(int $postId, string $token): bool
-	{
-		return (string)update_post_meta($postId, self::$clientAppPublicKey, $token);
-	}
-
-	/**
-	 * @param int $postId
-	 * @return bool|mixed
-	 */
-	public static function getClientAppSecretToken(int $postId): bool
-	{
-		return (string)get_post_meta($postId, self::$clientAppSecretAppKey, true);
-	}
-
-	/**
-	 * @param int $postId
-	 * @param string $token
-	 * @return bool|mixed
-	 */
-	public static function setClientAppSecretToken(int $postId, string $token): bool
-	{
-		return (string)update_post_meta($postId, self::$clientAppSecretAppKey, $token);
+		return strtotime('+'.$val.' hour');
 	}
 
 	/**
@@ -299,13 +253,13 @@ class Option
 	 *
 	 * @return bool
 	 */
-	public static function revokeAccessToken($userID = '')
+	public static function revokeAccessToken($userID = ''): bool
 	{
 		$userID = self::safeGetUserId($userID);
 		if (empty($userID)) {
 			return false;
 		}
 
-		return delete_user_meta($userID, self::$userTokenKey);
+		return (bool)delete_user_meta($userID, self::$userTokenKey);
 	}
 }

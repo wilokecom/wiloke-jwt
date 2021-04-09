@@ -27,6 +27,7 @@ define('INVALID_REFRESH_TOKEN', 'INVALID_REFRESH_TOKEN');
 define('WILOKE_JWT_VERSION', 1.0);
 define('WILOKE_JWT_URL', plugin_dir_url(__FILE__));
 define('WILOKE_JWT_PATH', plugin_dir_path(__FILE__));
+define('WILOKE_JWT_PREFIX', 'wiloke-jwt_');
 
 if (is_admin()) {
 //	new \WilokeJWT\Controllers\AdminMenuController();
