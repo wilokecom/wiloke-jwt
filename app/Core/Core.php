@@ -13,262 +13,316 @@ use WP_User;
  */
 class Core
 {
-    /**
-     * @return false|int
-     */
-    protected function getTokenExpired()
-    {
-        return Option::getAccessTokenExp();
-    }
+	/**
+	 * @return false|int
+	 */
+	protected function getTokenExpired()
+	{
+		return Option::getAccessTokenExp();
+	}
 
-    /**
-     * @param $userId
-     *
-     * @return array|mixed
-     */
-    private function getBlackListAccessToken($userId)
-    {
-        $blackListAT = get_user_meta($userId, 'black_list_access_token', true);
+	/**
+	 * @param $userId
+	 *
+	 * @return array|mixed
+	 */
+	private function getBlackListAccessToken($userId)
+	{
+		$blackListAT = get_user_meta($userId, 'black_list_access_token', true);
 
-        return empty($blackListAT) ? [] : $blackListAT;
-    }
+		return empty($blackListAT) ? [] : $blackListAT;
+	}
 
-    /**
-     * @param $userId
-     * @param $accessToken
-     *
-     * @return bool
-     */
-    protected function isBlackListAccessToken($userId, $accessToken)
-    {
-        $aBlackList = $this->getBlackListAccessToken($userId);
+	/**
+	 * @param $userId
+	 * @param $accessToken
+	 *
+	 * @return bool
+	 */
+	protected function isBlackListAccessToken($userId, $accessToken)
+	{
+		$aBlackList = $this->getBlackListAccessToken($userId);
 
-        return in_array($accessToken, $aBlackList);
-    }
+		return in_array($accessToken, $aBlackList);
+	}
 
-    /**
-     * @param $userId
-     * @param $accessToken
-     *
-     * @return array|mixed
-     */
-    private function setBlackListAccessToken($userId, $accessToken)
-    {
-        $aBlackLists = $this->getBlackListAccessToken($userId);
-        $aBlackLists = array_splice($aBlackLists, 0, 49); // maximum 50 items only
-        array_unshift($aBlackLists, $accessToken);
+	/**
+	 * @param $userId
+	 * @param $accessToken
+	 *
+	 * @return array|mixed
+	 */
+	private function setBlackListAccessToken($userId, $accessToken): array
+	{
+		$aBlackLists = $this->getBlackListAccessToken($userId);
+		$aBlackLists = array_splice($aBlackLists, 0, 49); // maximum 50 items only
+		array_unshift($aBlackLists, $accessToken);
 
-        update_user_meta($userId, 'black_list_access_token', $aBlackLists);
+		update_user_meta($userId, 'black_list_access_token', $aBlackLists);
 
-        return $aBlackLists;
-    }
+		return $aBlackLists;
+	}
 
-    /**
-     * @param $userId
-     *
-     * @return bool
-     */
-    protected function revokeAccessToken($userId)
-    {
-        $host = parse_url(home_url('/'), PHP_URL_HOST);
-        setcookie(
-            'wiloke_my_jwt',
-            '',
-            current_time('timestamp') - 10000000,
-            '/',
-            $host,
-            is_ssl()
-        );
+	/**
+	 * @param $userId
+	 *
+	 * @return bool
+	 */
+	protected function revokeUserAccessToken($userId): bool
+	{
+		$host = parse_url(home_url('/'), PHP_URL_HOST);
+		setcookie(
+			'wiloke_my_jwt',
+			'',
+			current_time('timestamp') - 10000000,
+			'/',
+			$host,
+			is_ssl()
+		);
 
-        $accessToken = Option::getUserToken($userId);
-        $this->setBlackListAccessToken($userId, $accessToken);
+		$accessToken = Option::getUserToken($userId);
+		$this->setBlackListAccessToken($userId, $accessToken);
 
-        return Option::revokeAccessToken($userId);
-    }
+		return Option::revokeAccessToken($userId);
+	}
 
-    /**
-     * @param $userId
-     *
-     * @return bool
-     */
-    protected function revokeRefreshAccessToken($userId)
-    {
-        self::revokeAccessToken($userId);
+	protected function revokeClientAppAccessToken($appId): bool
+	{
+		$host = parse_url(home_url('/'), PHP_URL_HOST);
+		$this->setBlackListAccessToken($userId, $accessToken);
 
-        return Option::revokeRefreshToken($userId);
-    }
+		return Option::revokeAccessToken($userId);
+	}
 
-    /**
-     * @param $token
-     *
-     * @return bool|mixed
-     */
-    protected function isValidAccessTokenEvenExpired($token)
-    {
-        try {
-            $key    = Option::getAccessTokenKey();
-            $oParse = JWT::decode($token, $key, ['HS256']);
-            $oUser  = json_decode($oParse->message);
 
-            return isset($oUser->userID) && !empty($oUser->userID);
-        } catch (Exception $oE) {
-            return strtoupper($oE->getMessage()) === 'EXPIRED TOKEN';
-        }
-    }
+	/**
+	 * @param $userId
+	 *
+	 * @return bool
+	 */
+	protected function revokeRefreshAccessToken($userId): bool
+	{
+		self::revokeUserAccessToken($userId);
 
-    /**
-     * @param        $token
-     * @param string $type
-     *
-     * @return mixed
-     * @throws Exception
-     */
-    protected function verifyToken($token, $type = 'access_token')
-    {
-        $errMsg = '';
-        $oUser  = (object)[];
+		return Option::revokeRefreshToken($userId);
+	}
 
-        try {
-            if ($type === 'refresh_token') {
-                $key = Option::getRefreshTokenKey();
-            } else {
-                $key = Option::getAccessTokenKey();
-            }
+	/**
+	 * @param $token
+	 *
+	 * @return bool|mixed
+	 */
+	protected function isValidAccessTokenEvenExpired($token)
+	{
+		try {
+			$key = Option::getAccessTokenKey();
+			$oParse = JWT::decode($token, $key, ['HS256']);
+			$oUser = json_decode($oParse->message);
 
-            $oParse = JWT::decode($token, $key, ['HS256']);
-            $oUser  = json_decode($oParse->message);
-            if (!isset($oUser->userID) || empty($oUser->userID)) {
-                $errMsg = esc_html__('The user has been removed or does not exist', 'wiloke-jwt');
-            } else {
-                if ($type === 'refresh_token') {
-                    $currentToken = Option::getUserRefreshToken($oUser->userID);
-                    if ($token !== $currentToken) {
-                        $errMsg = esc_html__('The token has been expired', 'wiloke-jwt');
-                    }
-                }
-            }
+			return isset($oUser->userID) && !empty($oUser->userID);
+		}
+		catch (Exception $oE) {
+			return strtoupper($oE->getMessage()) === 'EXPIRED TOKEN';
+		}
+	}
 
-        } catch (Exception $oE) {
-            $errMsg = $oE->getMessage();
-        }
+	/**
+	 * @param        $token
+	 * @param string $type
+	 *
+	 * @return mixed
+	 * @throws Exception
+	 */
+	protected function verifyToken($token, $type = 'access_token')
+	{
+		$errMsg = '';
+		$oUser = (object)[];
 
-        if (!empty($errMsg)) {
-            throw new Exception($errMsg);
-        }
+		try {
+			if ($type === 'refresh_token') {
+				$key = Option::getRefreshTokenKey();
+			} else {
+				$key = Option::getAccessTokenKey();
+			}
 
-        return $oUser;
-    }
+			$oParse = JWT::decode($token, $key, ['HS256']);
+			$oUser = json_decode($oParse->message);
+			if (!isset($oUser->userID) || empty($oUser->userID)) {
+				$errMsg = esc_html__('The user has been removed or does not exist', 'wiloke-jwt');
+			} else {
+				if ($type === 'refresh_token') {
+					$currentToken = Option::getUserRefreshToken($oUser->userID);
+					if ($token !== $currentToken) {
+						$errMsg = esc_html__('The token has been expired', 'wiloke-jwt');
+					}
+				}
+			}
 
-    /**
-     * @param $refreshToken
-     *
-     * @return string
-     * @throws Exception
-     */
-    protected function renewAccessToken($refreshToken)
-    {
-        $oInfo = $this->verifyToken($refreshToken, 'refresh_token');
-        $oUser = new WP_User($oInfo->userID);
+		}
+		catch (Exception $oE) {
+			$errMsg = $oE->getMessage();
+		}
 
-        if (empty($oUser) || is_wp_error($oUser)) {
-            throw new Exception(esc_html__('The user has been removed', 'wiloke-jwt'));
-        }
+		if (!empty($errMsg)) {
+			throw new Exception($errMsg);
+		}
 
-        $this->revokeAccessToken($oUser->ID);
+		return $oUser;
+	}
 
-        return $this->generateToken($oUser);
-    }
+	/**
+	 * @param $refreshToken
+	 *
+	 * @return string
+	 * @throws Exception
+	 */
+	protected function renewAccessToken($refreshToken)
+	{
+		$oInfo = $this->verifyToken($refreshToken, 'refresh_token');
+		$oUser = new WP_User($oInfo->userID);
 
-    /**
-     * @param $oUser
-     *
-     * @return false|string
-     */
-    private function generateTokenMsg($oUser)
-    {
-        return json_encode(
-            [
-                'userID'    => $oUser->ID,
-                'userName'  => $oUser->user_login,
-                'userEmail' => $oUser->user_email
-            ]
-        );
-    }
+		if (empty($oUser) || is_wp_error($oUser)) {
+			throw new Exception(esc_html__('The user has been removed', 'wiloke-jwt'));
+		}
 
-    /**
-     * @param WP_User $oUser
-     * @param bool    $ignoreSetCookie
-     *
-     * @return mixed|string
-     */
-    protected function generateToken(WP_User $oUser, $ignoreSetCookie = false)
-    {
-        $token = Option::getUserToken($oUser->ID);
+		$this->revokeUserAccessToken($oUser->ID);
 
-        if (!empty($token)) {
-            try {
-                $oUserInfo = $this->verifyToken($token);
-            } catch (Exception $exception) {
+		return $this->generateToken($oUser);
+	}
 
-            }
-        }
+	/**
+	 * @param array $aInfo
+	 * @return false|string
+	 */
+	private function generateTokenMsg(array $aInfo)
+	{
+		return json_encode($aInfo);
+	}
 
-        if (!isset($oUserInfo)) {
-            $aPayload = [
-                'message' => $this->generateTokenMsg($oUser),
-                'exp'     => $this->getTokenExpired()
-            ];
+	private function generateUserTokenMsg($oUser)
+	{
+		return $this->generateUserTokenMsg(
+			[
+				'userID'    => $oUser->ID,
+				'userName'  => $oUser->user_login,
+				'userEmail' => $oUser->user_email
+			]
+		);
+	}
 
-            $token = JWT::encode($aPayload, Option::getAccessTokenKey());
-            Option::saveUserToken($token, $oUser->ID);
+	private function generateClientAppTokenMsg(\WP_Post $post)
+	{
+		return $this->generateUserTokenMsg(
+			[
+				'userID' => $post->post_author,
+				'postID' => $post->ID
+			]
+		);
+	}
 
-            do_action('wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $ignoreSetCookie);
-        } else {
-            do_action('wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $ignoreSetCookie);
-        }
+	/**
+	 * @param array $aMessage
+	 * @param int $expiredUntil
+	 * @return mixed|string
+	 */
+	protected function generateToken(array $aMessage, int $expiredUntil): string
+	{
+		$aPayload = [
+			'message' => $aMessage,
+			'exp'     => $expiredUntil
+		];
 
-        return $token;
-    }
+		return JWT::encode($aPayload, Option::getAccessTokenKey());
+	}
 
-    /**
-     * @param WP_User $oUser
-     *
-     * @return string
-     */
-    protected function generateRefreshToken(WP_User $oUser): string
-    {
-        $aPayload = [
-            'message' => $this->generateTokenMsg($oUser),
-            'exp'     => Option::getRefreshAccessTokenExp()
-        ];
+	protected function generateClientAppToken(WP_User $oUser, $ignoreSetCookie = false)
+	{
+		$token = Option::getClientAppPublicToken($oUser->ID);
 
-        $encoded = JWT::encode($aPayload, Option::getRefreshTokenKey());
-        Option::saveUserRefreshToken($encoded, $oUser->ID);
+		if (!empty($token)) {
+			throw new \Exception('The token has been generated already');
+		}
 
-        return $encoded;
-    }
+		$aPayload = [
+			'message' => $this->generateUserTokenMsg($oUser),
+			'exp'     => $this->getTokenExpired()
+		];
 
-    /**
-     * @param $accessToken
-     *
-     * @return bool
-     */
-    protected function isAccessTokenExpired($accessToken)
-    {
-        try {
-            JWT::decode($accessToken, Option::getAccessTokenKey(), ['HS256']);
-            //            $oUserInfo = json_decode($oParse->message);
-            //
-            //            $userAccessToken = Option::getUserToken($oUserInfo->userID);
-            //            $this->verifyToken($userAccessToken);
-            return false;
-        } catch (Exception $exception) {
-            $message = $exception->getMessage();
-            if (is_string($message) && strtoupper($message) === 'EXPIRED TOKEN') {
-                return true;
-            }
+		$token = JWT::encode($aPayload, Option::getAccessTokenKey());
+		Option::saveUserToken($token, $oUser->ID);
 
-            return false;
-        }
-    }
+		do_action('wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $ignoreSetCookie);
+
+		return $token;
+	}
+
+	protected function generateUserToken(WP_User $oUser, $ignoreSetCookie = false)
+	{
+		$token = Option::getUserToken($oUser->ID);
+
+		if (!empty($token)) {
+			try {
+				$oUserInfo = $this->verifyToken($token);
+			}
+			catch (Exception $exception) {
+
+			}
+		}
+
+		if (!isset($oUserInfo)) {
+			$aPayload = [
+				'message' => $this->generateUserTokenMsg($oUser),
+				'exp'     => $this->getTokenExpired()
+			];
+
+			$token = JWT::encode($aPayload, Option::getAccessTokenKey());
+			Option::saveUserToken($token, $oUser->ID);
+
+			do_action('wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $ignoreSetCookie);
+		} else {
+			do_action('wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $ignoreSetCookie);
+		}
+
+		return $token;
+	}
+
+	/**
+	 * @param array<{userID: int, postId: ?int}> $aMessage
+	 * @param $expiredUntil
+	 * @return string
+	 */
+	protected function generateRefreshToken(array $aMessage, int $expiredUntil): string
+	{
+		$aPayload = [
+			'message' => $aMessage,
+			'exp'     => $expiredUntil
+		];
+
+		return JWT::encode($aPayload, Option::getRefreshTokenKey());
+	}
+
+	/**
+	 * @param $accessToken
+	 *
+	 * @return bool
+	 */
+	protected function isAccessTokenExpired($accessToken)
+	{
+		try {
+			JWT::decode($accessToken, Option::getAccessTokenKey(), ['HS256']);
+			//            $oUserInfo = json_decode($oParse->message);
+			//
+			//            $userAccessToken = Option::getUserToken($oUserInfo->userID);
+			//            $this->verifyToken($userAccessToken);
+			return false;
+		}
+		catch (Exception $exception) {
+			$message = $exception->getMessage();
+			if (is_string($message) && strtoupper($message) === 'EXPIRED TOKEN') {
+				return true;
+			}
+
+			return false;
+		}
+	}
 }
