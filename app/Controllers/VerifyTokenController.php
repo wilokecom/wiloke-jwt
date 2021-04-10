@@ -13,87 +13,83 @@ use WP_REST_Response;
  * Class VerifyTokenController
  * @package WilokeJWT\Controllers
  */
-final class VerifyTokenController extends Core
-{
-    /**
-     * VerifyTokenController constructor.
-     */
-    public function __construct()
-    {
-        add_action('rest_api_init', [$this, 'registerRestRouter']);
-        add_filter('wiloke-jwt/filter/verify-token', [$this, 'filterVerifyToken'], 10, 2);
-    }
+final class VerifyTokenController extends Core {
+	/**
+	 * VerifyTokenController constructor.
+	 */
+	public function __construct() {
+		add_action( 'rest_api_init', [ $this, 'registerRestRouter' ] );
+		add_filter( 'wiloke-jwt/filter/verify-token', [ $this, 'filterVerifyToken' ], 10, 2 );
+	}
 
-    /**
-     * @param $aStatus
-     * @param $token
-     * @return array
-     */
-    public function filterVerifyToken($aStatus, $token)
-    {
-        try {
-            $aInfo = $this->verifyToken($token);
-            return [
-                'data' => $aInfo
-            ];
-        } catch (Exception $e) {
-            return [
-                'error' => [
-                    'message' => $e->getMessage(),
-                    'code' => 401
-                ]
-            ];
-        }
-    }
+	/**
+	 * @param $aStatus
+	 * @param $token
+	 *
+	 * @return array
+	 */
+	public function filterVerifyToken( $aStatus, $token ): array {
+		try {
+			$aInfo = $this->verifyToken( $token );
 
-    public function registerRestRouter()
-    {
-        register_rest_route('wilokejwt/v1', '/signin', [
-            'methods' => 'POST',
-            'args' => [
-                'username' => [
-                    'required' => true,
-                    'type' => 'string',
-                    'description' => esc_html__('The username is required', 'wiloke-jwt')
-                ],
-                'password' => [
-                    'required' => true,
-                    'type' => 'string',
-                    'description' => esc_html__('The password is required', 'wiloke-jwt')
-                ]
-            ],
-            'callback' => [$this, 'signIn'],
-            'permission_callback' => '__return_true'
-        ]);
-    }
+			return [
+				'userID' => $aInfo->userID
+			];
+		}
+		catch ( Exception $e ) {
+			return [
+				'msg'  => $e->getMessage(),
+				'code' => 401
+			];
+		}
+	}
 
-    /**
-     * @param WP_REST_Request $oRequest
-     *
-     * @return WP_REST_Response
-     */
-    public function signIn(WP_REST_Request $oRequest)
-    {
-        $oUser = wp_signon([
-            'user_login' => $oRequest->get_param('username'),
-            'user_password' => $oRequest->get_param('password'),
-            'remember' => true
-        ], is_ssl());
+	public function registerRestRouter() {
+		register_rest_route( 'wilokejwt/v1', '/signin', [
+			'methods'             => 'POST',
+			'args'                => [
+				'username' => [
+					'required'    => true,
+					'type'        => 'string',
+					'description' => esc_html__( 'The username is required', 'wiloke-jwt' )
+				],
+				'password' => [
+					'required'    => true,
+					'type'        => 'string',
+					'description' => esc_html__( 'The password is required', 'wiloke-jwt' )
+				]
+			],
+			'callback'            => [ $this, 'signIn' ],
+			'permission_callback' => '__return_true'
+		] );
+	}
 
-        if (is_wp_error($oUser)) {
-            return new WP_REST_Response([
-                'error' => $oUser->get_error_message()
-            ], 401);
-        }
+	/**
+	 * @param WP_REST_Request $oRequest
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function signIn( WP_REST_Request $oRequest ) {
+		$oUser = wp_signon( [
+			'user_login'    => $oRequest->get_param( 'username' ),
+			'user_password' => $oRequest->get_param( 'password' ),
+			'remember'      => true
+		], is_ssl() );
 
-        return new WP_REST_Response(
-            apply_filters(
-                'wiloke-jwt/app/general-token-controller/signed-in-msg',
-                [
-                    'token' => Option::getUserToken($oUser->ID)
-                ]
-            ),
-            200
-        );
-    }
+		if ( is_wp_error( $oUser ) ) {
+			return new WP_REST_Response( [
+				'error' => $oUser->get_error_message()
+			], 401 );
+		}
+
+		return new WP_REST_Response(
+			apply_filters(
+				'wiloke-jwt/app/general-token-controller/signed-in-msg',
+				[
+					'token' => Option::getUserToken( $oUser->ID )
+				]
+			),
+			200
+		);
+	}
 }

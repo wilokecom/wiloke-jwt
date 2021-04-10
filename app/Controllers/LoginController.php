@@ -13,6 +13,7 @@ use WilokeJWT\Illuminate\Message\MessageFactory;
 use WilokeJWT\Models\AppClientModel;
 use WilokeJWT\Models\PreLoginModel;
 use WP_REST_Request;
+use WP_User;
 
 final class LoginController extends Core
 {
