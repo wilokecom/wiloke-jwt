@@ -30,7 +30,7 @@ define('WILOKE_JWT_PATH', plugin_dir_path(__FILE__));
 define('WILOKE_JWT_PREFIX', 'wiloke-jwt_');
 
 if (is_admin()) {
-//	new \WilokeJWT\Controllers\AdminMenuController();
+	new \WilokeJWT\Controllers\AdminMenuController();
 }
 
 /**
@@ -38,8 +38,8 @@ if (is_admin()) {
  */
 global $oGenerateTokenController;
 
-//$oGenerateTokenController = new \WilokeJWT\Controllers\GenerateTokenController();
-//$oVerifyTokenController = new \WilokeJWT\Controllers\VerifyTokenController();
+$oGenerateTokenController = new \WilokeJWT\Controllers\GenerateTokenController();
+$oVerifyTokenController = new \WilokeJWT\Controllers\VerifyTokenController();
 //new UserProfileController;
 new PostTypeRegistry;
 new LoginController;

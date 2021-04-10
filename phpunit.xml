@@ -23,9 +23,9 @@
         <ini name="display_errors" value="ON"/>
         <ini name="display_startup_errors" value="ON"/>
         <env name="REST_BASE" value="wiloke-jwt/v1"/>
-        <env name="HOME_URL" value="http://localhost:8888/wilcity.com/"/>
+        <env name="HOME_URL" value="http://localhost/"/>
         <env name="ADMIN_USERNAME" value="admin"/>
-        <env name="ADMIN_AUTH_PASS" value="4CdoxreXKcIuvMbpfMz0YKUY"/>
+        <env name="ADMIN_AUTH_PASS" value="pNi5CoqC7ZfmGq0u0Al07aNP"/>
         <env name="ADMIN_PASSWORD" value="admin"/>
     </php>
 </phpunit>
