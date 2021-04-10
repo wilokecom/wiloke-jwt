@@ -152,10 +152,16 @@ final class GenerateTokenController extends Core
 		try {
 			$oUserInfo = $this->verifyToken($token, 'refresh_token');
 			$this->revokeRefreshAccessToken($oUserInfo->userID);
-			return [
-				'code' => 200,
-				'msg'  => esc_html__('The token has been revoked', 'wiloke-jwt')
-			];
+            $oUser = new WP_User($oUserInfo->userID);
+            $refreshToken = $this->generateRefreshToken($oUser);
+            $accessToken = $this->generateToken($oUser);
+
+            return [
+                'data' => [
+                    'refreshToken' => $refreshToken,
+                    'accessToken'  => $accessToken
+                ]
+            ];
 		}
 		catch (Exception $exception) {
 			return [
@@ -321,7 +327,6 @@ final class GenerateTokenController extends Core
 
 		try {
 			$this->verifyToken($accessToken);
-
 			if (Option::isTestMode()) {
 				$refreshToken = Option::getUserRefreshToken($oUser->ID);
 				$accessToken = $this->renewAccessToken($refreshToken);
