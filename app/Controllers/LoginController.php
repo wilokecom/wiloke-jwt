@@ -174,10 +174,6 @@ final class LoginController extends Core
                 return MessageFactory::factory('rest')
                     ->success(esc_html__('Congrats, You have logged in successfully', 'wiloke-jwt'));
             } else {
-                if ($aResponse['msg'] == 'Expired token') {
-                    return MessageFactory::factory('rest')
-                        ->error('Assess token expired', 400);
-                }
                 return MessageFactory::factory('rest')->error($aResponse['msg'], $aResponse['code']);
             }
         } catch (Exception $oException) {
@@ -212,7 +208,7 @@ final class LoginController extends Core
             // 'accessToken'  => 'xxxx',
             // 'refreshToken' => 'yyyyyy'
             //]
-            if (!empty($aToken) && ($aToken['code']===200)) {
+            if (!empty($aToken) && ($aToken['code'] === 200)) {
                 return MessageFactory::factory('rest')
                     ->success(esc_html__('The access token has been created successfully', 'wiloke-jwt'),
                         $aToken['data']);
