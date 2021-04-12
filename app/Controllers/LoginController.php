@@ -185,6 +185,10 @@ final class LoginController extends Core
         }
     }
 
+    /**
+     * @param WP_REST_Request $oRequest
+     *
+     */
     public function renewToken(WP_REST_Request $oRequest)
     {
         $aData = $oRequest->get_params();
@@ -203,9 +207,14 @@ final class LoginController extends Core
                 ],
                 $aData['refreshToken']
             );
-            if (!empty($aToken) && !isset($aToken['msg'])) {
+            //Dữ liệu trong $aToken['data'] có:
+            //$aToken['data']=[
+            // 'accessToken'  => 'xxxx',
+            // 'refreshToken' => 'yyyyyy'
+            //]
+            if (!empty($aToken) && ($aToken['code']===200)) {
                 return MessageFactory::factory('rest')
-                    ->success(esc_html__('Assess token created new successfully', 'wiloke-jwt'),
+                    ->success(esc_html__('The access token has been created successfully', 'wiloke-jwt'),
                         $aToken['data']);
             } else {
                 return MessageFactory::factory('rest')->error($aToken['msg'], $aToken['code']);
