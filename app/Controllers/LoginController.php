@@ -165,10 +165,8 @@ final class LoginController extends Core
             $aResponse = apply_filters(
                 'wiloke-jwt/filter/verify-token',
                 [
-                    'error' => [
-                        'message' => esc_html__('Wiloke JWT plugin is required', 'wiloke-jwt'),
-                        'code'    => 404
-                    ]
+                    'msg'  => esc_html__('Wiloke JWT plugin is required', 'wiloke-jwt'),
+                    'code' => 404
                 ],
                 $accessToken
             );
@@ -200,10 +198,8 @@ final class LoginController extends Core
             $aToken = apply_filters(
                 'wiloke/filter/revoke-refresh-access-token',
                 [
-                    'error' => [
-                        'message' => esc_html__('Wiloke JWT plugin is required', 'wiloke-jwt'),
-                        'code'    => 404
-                    ]
+                    'msg'  => esc_html__('Wiloke JWT plugin is required', 'wiloke-jwt'),
+                    'code' => 404
                 ],
                 $aData['refreshToken']
             );
