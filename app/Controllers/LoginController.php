@@ -162,30 +162,29 @@ final class LoginController extends Core
     {
         $accessToken = $oRequest->get_param('accessToken');
         try {
-            $aResponse = $this->getResponseData($accessToken);
-            if (isset($aResponse['error']) && $aResponse['error']['message'] == 'Expired token') {
+            $aResponse = apply_filters(
+                'wiloke-jwt/filter/verify-token',
+                [
+                    'error' => [
+                        'message' => esc_html__('Wiloke JWT plugin is required', 'wiloke-jwt'),
+                        'code'    => 404
+                    ]
+                ],
+                $accessToken
+            );
+            if ($aResponse['code']===200){
                 return MessageFactory::factory('rest')
-                    ->error('Assess token expired',400);
+                    ->success(esc_html__('Congrats, You have logged in successfully', 'wiloke-jwt'));
+            }else{
+                if ($aResponse['msg'] == 'Expired token') {
+                    return MessageFactory::factory('rest')
+                        ->error('Assess token expired',400);
+                }
+                return MessageFactory::factory('rest')->error($aResponse['msg'],$aResponse['code']);
             }
-            return MessageFactory::factory('rest')
-                ->success(esc_html__('Congrats, You have logged in successfully', 'wiloke-jwt'));
         } catch (Exception $oException) {
             return MessageFactory::factory('rest')->error($oException->getMessage(), $oException->getCode());
         }
-    }
-
-    private function getResponseData(string $accessToken)
-    {
-        return apply_filters(
-            'wiloke-jwt/filter/verify-token',
-            [
-                'error' => [
-                    'message' => esc_html__('Wiloke JWT plugin is required', 'wiloke-jwt'),
-                    'code'    => 404
-                ]
-            ],
-            $accessToken
-        );
     }
     public function renewToken(WP_REST_Request $oRequest){
         $aData = $oRequest->get_params();

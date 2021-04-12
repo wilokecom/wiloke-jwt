@@ -33,7 +33,8 @@ final class VerifyTokenController extends Core {
 			$aInfo = $this->verifyToken( $token );
 
 			return [
-				'userID' => $aInfo->userID
+				'userID' => $aInfo->userID,
+                'code' => 200
 			];
 		}
 		catch ( Exception $e ) {

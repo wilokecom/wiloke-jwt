@@ -29,11 +29,43 @@ class RegisterAccountTest extends CommonController
     public function testRegister($code){
         $aResponse = $this->restPOST('sign-up', [
             'code'  => $code,
-            'email' => 'adb@gmail.com'
+            'email' => 'adbccc1@gmail.com'
         ]);
         $this->assertIsArray($aResponse);
         $this->assertEquals('Congrats, You have registered successfully',$aResponse['msg'],'returning equal customers');
         $this->assertArrayHasKey('accessToken', $aResponse);
         return $aResponse;
+    }
+
+    /**
+     * @depends testRegister
+     */
+    public function testLogin($aToken)
+    {
+        $aResponse = $this->restPOST('sign-in', [
+            'accessToken'  => $aToken['accessToken'],
+            'refreshToken' => $aToken['refreshToken']
+        ]);
+        $this->assertIsArray($aResponse);
+        $this->assertEquals('Congrats, You have logged in successfully', $aResponse['msg'],
+            'returning equal customers');
+        $this->assertEquals('success', $aResponse['status']);
+        return $aToken;
+    }
+    /**
+     * @depends testLogin
+     */
+    public function testRefreshToken($aToken)
+    {
+        sleep(20);
+        $aResponse = $this->restPOST('renew-token', [
+            'accessToken'  => $aToken['accessToken'],
+            'refreshToken' => $aToken['refreshToken']
+        ]);
+        $this->assertIsArray($aResponse);
+        $this->assertEquals('Assess token created new successfully', $aResponse['msg'],
+            'returning equal customers');
+        $this->assertEquals('success', $aResponse['status']);
+        return $aToken;
     }
 }
