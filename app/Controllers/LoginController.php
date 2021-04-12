@@ -10,6 +10,7 @@ use WilokeJWT\Helpers\ClientIP;
 use WilokeJWT\Helpers\Option;
 use WilokeJWT\Helpers\Users;
 use WilokeJWT\Illuminate\Message\MessageFactory;
+use WilokeJWT\Models\AppClientModel;
 use WilokeJWT\Models\PreLoginModel;
 use WP_REST_Request;
 
@@ -61,6 +62,15 @@ final class LoginController extends Core
                 'permission_callback' => '__return_true'
             ]
         );
+        register_rest_route(
+            WILOKE_JWT_API,
+            'renew-token',
+            [
+                'methods'             => 'POST',
+                'callback'            => [$this, 'renewToken'],
+                'permission_callback' => '__return_true'
+            ]
+        );
     }
 
     public function generateCode(WP_REST_Request $oRequest)
@@ -71,21 +81,11 @@ final class LoginController extends Core
                 400
             );
         }
-        if (!PreLoginModel::isAppIdExist($oRequest->get_param('app_id'))) {
+
+        if (!AppClientModel::isValidApp($oRequest->get_param('app_id'),$oRequest->get_param('app_secret'))) {
             return MessageFactory::factory('rest')->error(
-                esc_html__('The app id not has existed in database', 'wiloke-jwt'),
-                400
-            );
-        }
-        if (!PreLoginModel::isAppSecretExist($oRequest->get_param('app_secret'))) {
-            return MessageFactory::factory('rest')->error(
-                esc_html__('The app secret not has existed in database', 'wiloke-jwt'),
-                400
-            );
-        }
-        if (!get_post_status(PreLoginModel::getPostIDByAppId($oRequest->get_param('app_id'))) === 'publish') {
-            return MessageFactory::factory('rest')->error(
-                esc_html__('The app secret not has existed in database', 'wiloke-jwt'),
+                esc_html__('The app id or app secret not has existed in the database or the page had must enable public',
+                    'wiloke-jwt'),
                 400
             );
         }
@@ -163,28 +163,11 @@ final class LoginController extends Core
         try {
             $aResponse = $this->getResponseData($accessToken);
             if (isset($aResponse['error']) && $aResponse['error']['message'] == 'Expired token') {
-                $aToken = apply_filters(
-                    'wiloke/filter/revoke-refresh-access-token',
-                    [
-                        'error' => [
-                            'message' => esc_html__('Wiloke JWT plugin is required', 'wiloke-jwt'),
-                            'code'    => 404
-                        ]
-                    ],
-                    $oRequest->get_param('refreshToken')
-                );
-                if (!empty($aToken) && !isset($aToken['msg'])) {
-                    $aResponse = $this->getResponseData($aToken['data']['accessToken']);
-                } else {
-                    return MessageFactory::factory('rest')->error($aToken['msg'],$aToken['code']);
-                }
+                return MessageFactory::factory('rest')
+                    ->error('Assess token expired',400);
             }
             return MessageFactory::factory('rest')
-                ->success(esc_html__('Congrats, You have logged in successfully', 'wiloke-jwt'),
-                    [
-                        'accessToken'  => Option::getUserAccessToken($aResponse['data']->userID),
-                        'refreshToken' => Option::getUserRefreshToken($aResponse['data']->userID)
-                    ]);
+                ->success(esc_html__('Congrats, You have logged in successfully', 'wiloke-jwt'));
         } catch (Exception $oException) {
             return MessageFactory::factory('rest')->error($oException->getMessage(), $oException->getCode());
         }
@@ -202,5 +185,35 @@ final class LoginController extends Core
             ],
             $accessToken
         );
+    }
+    public function renewToken(WP_REST_Request $oRequest){
+        $aData = $oRequest->get_params();
+        try {
+            if (!isset($aData['code']) && empty($aData['refreshToken'])) {
+                return MessageFactory::factory('rest')->error(
+                    esc_html__('The refresh token is required', 'wiloke-jwt'),
+                    400
+                );
+            }
+            $aToken = apply_filters(
+                'wiloke/filter/revoke-refresh-access-token',
+                [
+                    'error' => [
+                        'message' => esc_html__('Wiloke JWT plugin is required', 'wiloke-jwt'),
+                        'code'    => 404
+                    ]
+                ],
+                $aData['refreshToken']
+            );
+            if (!empty($aToken) && !isset($aToken['msg'])) {
+                return MessageFactory::factory('rest')
+                    ->success(esc_html__('Assess token created new successfully', 'wiloke-jwt'),
+                        $aToken['data']);
+            } else {
+                return MessageFactory::factory('rest')->error($aToken['msg'],$aToken['code']);
+            }
+        } catch (Exception $oException) {
+            return MessageFactory::factory('rest')->error($oException->getMessage(), $oException->getCode());
+        }
     }
 }

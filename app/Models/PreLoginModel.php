@@ -5,6 +5,7 @@ namespace WilokeJWT\Models;
 
 
 use WilokeJWT\DB\PreLoginTbl;
+use WP_Query;
 
 class PreLoginModel
 {
@@ -86,41 +87,5 @@ class PreLoginModel
                 '%d'
             ]
         );
-    }
-
-    public static function isAppIdExist(string $appId): bool
-    {
-        global $wpdb;
-        $metaId = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT meta_id FROM $wpdb->postmeta  WHERE meta_value=%s",
-                $appId
-            )
-        );
-        return !empty($metaId);
-    }
-
-    public static function isAppSecretExist(string $appSecret): bool
-    {
-        global $wpdb;
-        $meta_id = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT meta_id FROM $wpdb->postmeta  WHERE meta_value=%s",
-                $appSecret
-            )
-        );
-        return !empty($meta_id);
-    }
-
-    public static function getPostIDByAppId(string $appId): int
-    {
-        global $wpdb;
-        $post_id = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT post_id FROM $wpdb->postmeta  WHERE meta_value=%s",
-                $appId
-            )
-        );
-        return $post_id ?? 0;
     }
 }
