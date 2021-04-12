@@ -83,7 +83,7 @@ final class LoginController extends Core
             );
         }
 
-        if (!AppClientModel::isValidApp($oRequest->get_param('app_id'),$oRequest->get_param('app_secret'))) {
+        if (!AppClientModel::isValidApp($oRequest->get_param('app_id'), $oRequest->get_param('app_secret'))) {
             return MessageFactory::factory('rest')->error(
                 esc_html__('The app id or app secret not has existed in the database or the page had must enable public',
                     'wiloke-jwt'),
@@ -172,24 +172,26 @@ final class LoginController extends Core
                 ],
                 $accessToken
             );
-            if ($aResponse['code']===200){
+            if ($aResponse['code'] === 200) {
                 return MessageFactory::factory('rest')
                     ->success(esc_html__('Congrats, You have logged in successfully', 'wiloke-jwt'));
-            }else{
+            } else {
                 if ($aResponse['msg'] == 'Expired token') {
                     return MessageFactory::factory('rest')
-                        ->error('Assess token expired',400);
+                        ->error('Assess token expired', 400);
                 }
-                return MessageFactory::factory('rest')->error($aResponse['msg'],$aResponse['code']);
+                return MessageFactory::factory('rest')->error($aResponse['msg'], $aResponse['code']);
             }
         } catch (Exception $oException) {
             return MessageFactory::factory('rest')->error($oException->getMessage(), $oException->getCode());
         }
     }
-    public function renewToken(WP_REST_Request $oRequest){
+
+    public function renewToken(WP_REST_Request $oRequest)
+    {
         $aData = $oRequest->get_params();
         try {
-            if (!isset($aData['code']) && empty($aData['refreshToken'])) {
+            if (!isset($aData['refreshToken']) && empty($aData['refreshToken'])) {
                 return MessageFactory::factory('rest')->error(
                     esc_html__('The refresh token is required', 'wiloke-jwt'),
                     400
@@ -210,7 +212,7 @@ final class LoginController extends Core
                     ->success(esc_html__('Assess token created new successfully', 'wiloke-jwt'),
                         $aToken['data']);
             } else {
-                return MessageFactory::factory('rest')->error($aToken['msg'],$aToken['code']);
+                return MessageFactory::factory('rest')->error($aToken['msg'], $aToken['code']);
             }
         } catch (Exception $oException) {
             return MessageFactory::factory('rest')->error($oException->getMessage(), $oException->getCode());
