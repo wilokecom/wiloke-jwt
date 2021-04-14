@@ -35,16 +35,6 @@ final class LoginController extends Core
                 'permission_callback' => '__return_true'
             ]
         );
-
-        register_rest_route(
-            WILOKE_JWT_API,
-            'signin-with-wilcity',
-            [
-                'methods'             => 'POST',
-                'callback'            => [$this, 'generateCode'],
-                'permission_callback' => '__return_true'
-            ]
-        );
         register_rest_route(
             WILOKE_JWT_API,
             'sign-up',
@@ -56,7 +46,7 @@ final class LoginController extends Core
         );
         register_rest_route(
             WILOKE_JWT_API,
-            'sign-in',
+            'sign-in-with-wilcity',
             [
                 'methods'             => 'POST',
                 'callback'            => [$this, 'handleSignIn'],
@@ -72,6 +62,23 @@ final class LoginController extends Core
                 'permission_callback' => '__return_true'
             ]
         );
+        register_rest_route(WILOKE_JWT_API, '/sign-in', [
+            'methods'             => 'POST',
+            'args'                => [
+                'username' => [
+                    'required'    => true,
+                    'type'        => 'string',
+                    'description' => esc_html__('The username is required', 'wiloke-jwt')
+                ],
+                'password' => [
+                    'required'    => true,
+                    'type'        => 'string',
+                    'description' => esc_html__('The password is required', 'wiloke-jwt')
+                ]
+            ],
+            'callback'            => [$this, 'signIn'],
+            'permission_callback' => '__return_true'
+        ]);
     }
 
     public function generateCode(WP_REST_Request $oRequest)
@@ -218,5 +225,35 @@ final class LoginController extends Core
         } catch (Exception $oException) {
             return MessageFactory::factory('rest')->error($oException->getMessage(), $oException->getCode());
         }
+    }
+
+    /**
+     * @param WP_REST_Request $oRequest
+     *
+     * @return WP_REST_Response
+     */
+    public function signIn(WP_REST_Request $oRequest)
+    {
+        $oUser = wp_signon([
+            'user_login'    => $oRequest->get_param('username'),
+            'user_password' => $oRequest->get_param('password'),
+            'remember'      => true
+        ], is_ssl());
+
+        if (is_wp_error($oUser)) {
+            return new WP_REST_Response([
+                'error' => $oUser->get_error_message()
+            ], 401);
+        }
+
+        return new WP_REST_Response(
+            apply_filters(
+                'wiloke-jwt/app/general-token-controller/signed-in-msg',
+                [
+                    'token' => Option::getUserToken($oUser->ID)
+                ]
+            ),
+            200
+        );
     }
 }

@@ -42,7 +42,7 @@ class RegisterAccountTest extends CommonController
      */
     public function testLogin($aToken)
     {
-        $aResponse = $this->restPOST('sign-in', [
+        $aResponse = $this->restPOST('sign-in-with-wilcity', [
             'accessToken'  => $aToken['accessToken'],
             'refreshToken' => $aToken['refreshToken']
         ]);
