@@ -46,7 +46,7 @@ final class LoginController extends Core
         );
         register_rest_route(
             WILOKE_JWT_API,
-            'sign-in-with-wilcity',
+            'wilcity/sign-in',
             [
                 'methods'             => 'POST',
                 'callback'            => [$this, 'handleSignIn'],
@@ -64,18 +64,6 @@ final class LoginController extends Core
         );
         register_rest_route(WILOKE_JWT_API, '/sign-in', [
             'methods'             => 'POST',
-            'args'                => [
-                'username' => [
-                    'required'    => true,
-                    'type'        => 'string',
-                    'description' => esc_html__('The username is required', 'wiloke-jwt')
-                ],
-                'password' => [
-                    'required'    => true,
-                    'type'        => 'string',
-                    'description' => esc_html__('The password is required', 'wiloke-jwt')
-                ]
-            ],
             'callback'            => [$this, 'signIn'],
             'permission_callback' => '__return_true'
         ]);
@@ -118,13 +106,13 @@ final class LoginController extends Core
     {
         $aData = $oRequest->get_params();
         try {
-            if (!isset($aData['code']) && empty($aData['code'])) {
+            if (!isset($aData['code']) || empty($aData['code'])) {
                 return MessageFactory::factory('rest')->error(
                     esc_html__('The code is required', 'wiloke-jwt'),
                     400
                 );
             }
-            if (!isset($aData['email']) && empty($aData['email'])) {
+            if (!isset($aData['email']) || empty($aData['email'])) {
                 return MessageFactory::factory('rest')->error(
                     esc_html__('The email  is required', 'wiloke-jwt'),
                     400
@@ -196,7 +184,7 @@ final class LoginController extends Core
     {
         $aData = $oRequest->get_params();
         try {
-            if (!isset($aData['refreshToken']) && empty($aData['refreshToken'])) {
+            if (!isset($aData['refreshToken']) || empty($aData['refreshToken'])) {
                 return MessageFactory::factory('rest')->error(
                     esc_html__('The refresh token is required', 'wiloke-jwt'),
                     400
@@ -230,10 +218,22 @@ final class LoginController extends Core
     /**
      * @param WP_REST_Request $oRequest
      *
-     * @return WP_REST_Response
+     *
      */
     public function signIn(WP_REST_Request $oRequest)
     {
+        if (!isset($aData['username']) || empty($aData['username'])) {
+            return MessageFactory::factory('rest')->error(
+                esc_html__('The username is required', 'wiloke-jwt'),
+                400
+            );
+        }
+        if (!isset($aData['password']) || empty($aData['password'])) {
+            return MessageFactory::factory('rest')->error(
+                esc_html__('The password is required', 'wiloke-jwt'),
+                400
+            );
+        }
         $oUser = wp_signon([
             'user_login'    => $oRequest->get_param('username'),
             'user_password' => $oRequest->get_param('password'),
