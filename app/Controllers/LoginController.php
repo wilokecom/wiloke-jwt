@@ -49,7 +49,7 @@ final class LoginController extends Core
             'wilcity/sign-in',
             [
                 'methods'             => 'POST',
-                'callback'            => [$this, 'handleSignIn'],
+                'callback'            => [$this, 'signinWithAccessToken'],
                 'permission_callback' => '__return_true'
             ]
         );
@@ -62,7 +62,7 @@ final class LoginController extends Core
                 'permission_callback' => '__return_true'
             ]
         );
-        register_rest_route(WILOKE_JWT_API, '/sign-in', [
+        register_rest_route(WILOKE_JWT_API, 'sign-in', [
             'methods'             => 'POST',
             'callback'            => [$this, 'signIn'],
             'permission_callback' => '__return_true'
@@ -153,7 +153,7 @@ final class LoginController extends Core
         }
     }
 
-    public function handleSignIn(WP_REST_Request $oRequest)
+    public function signinWithAccessToken(WP_REST_Request $oRequest)
     {
         $accessToken = $oRequest->get_param('accessToken');
         try {
