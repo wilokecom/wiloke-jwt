@@ -166,8 +166,19 @@ final class LoginController extends Core
                 $accessToken
             );
             if ($aResponse['code'] === 200) {
+                $userId=$aResponse['userID'];
+                $oUser=get_userdata($userId);
                 return MessageFactory::factory('rest')
-                    ->success(esc_html__('Congrats, You have logged in successfully', 'wiloke-jwt'));
+                    ->success(esc_html__('Congrats, You have logged in successfully', 'wiloke-jwt'),[
+                        'id'       => $userId,
+                        'username' => $oUser->user_login,
+                        'avatar'   => get_avatar_url( $oUser->ID, [ 100, 100 ] ),
+                        'roles'    => $oUser->roles,
+                        'tokens'   => [
+                            'accessToken'  => Option::getUserAccessToken( $userId ),
+                            'refreshToken' => Option::getUserRefreshToken( $userId )
+                        ]
+                    ]);
             } else {
                 return MessageFactory::factory('rest')->error($aResponse['msg'], $aResponse['code']);
             }
