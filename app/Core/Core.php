@@ -72,6 +72,20 @@ class Core {
 		return true;
 	}
 
+	protected function clearRefreshTokenCookie(): bool {
+		$host = parse_url( home_url( '/' ), PHP_URL_HOST );
+		setcookie(
+			'wiloke_my_rf_token',
+			'',
+			current_time( 'timestamp' ) - 10000000,
+			'/',
+			$host,
+			is_ssl()
+		);
+
+		return true;
+	}
+
 	/**
 	 * @param $token
 	 *
