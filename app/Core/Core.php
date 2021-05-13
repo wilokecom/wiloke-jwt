@@ -69,6 +69,15 @@ class Core {
 			is_ssl()
 		);
 
+		setcookie(
+			'wiloke_my_rf_token',
+			'',
+			current_time( 'timestamp' ) - 10000000,
+			'/',
+			$host,
+			is_ssl()
+		);
+
 		return true;
 	}
 
