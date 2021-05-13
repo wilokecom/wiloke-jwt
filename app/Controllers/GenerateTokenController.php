@@ -135,7 +135,7 @@ final class GenerateTokenController extends Core {
 	 * @return bool
 	 */
 	public function removeAccessTokenAfterLogout(): bool {
-		return $this->clearAccessTokenCookie();
+		return $this->clearTokens();
 	}
 
 	/**
