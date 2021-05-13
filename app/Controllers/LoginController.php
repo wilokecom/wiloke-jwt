@@ -176,10 +176,11 @@ final class LoginController extends Core
         }
     }
 
-    /**
-     * @param WP_REST_Request $oRequest
-     *
-     */
+	/**
+	 * @param WP_REST_Request $oRequest
+	 *
+	 * @return array|string|void|\WP_REST_Response
+	 */
     public function renewToken(WP_REST_Request $oRequest)
     {
         $aData = $oRequest->get_params();
