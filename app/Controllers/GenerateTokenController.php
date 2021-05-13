@@ -27,7 +27,7 @@ final class GenerateTokenController extends Core {
 		add_action( 'wiloke-jwt/created-access-token', [ $this, 'storeAccessTokenToCookie' ], 10, 3 );
 		add_action( 'wiloke-jwt/created-access-and-refresh-token', [ $this, 'storeAccessAndRefreshTokenToCookie' ], 10,
 			2 );
-//		add_action( 'clear_auth_cookie', [ $this, 'removeAccessTokenAfterLogout' ] );
+		add_action( 'wp_logout', [ $this, 'removeAccessTokenAfterLogout' ] );
 		add_action( 'user_register', [ $this, 'createRefreshTokenAfterUserRegisteredAccount' ] );
 		add_filter( 'wiloke/filter/get-refresh-token', [ $this, 'getUserRefreshToken' ] );
 		add_filter( 'wiloke/filter/revoke-access-token', [ $this, 'filterRevokeAccessToken' ], 10, 2 );
@@ -36,10 +36,13 @@ final class GenerateTokenController extends Core {
 		add_filter( 'wiloke/filter/is-access-token-expired', [ $this, 'filterIsTokenExpired' ], 10, 2 );
 		add_action( 'clean_user_cache', [ $this, 'maybeRevokeRefreshPasswordAfterUpdatingUser' ], 10, 2 );
 		add_action( 'delete_user', [ $this, 'deleteTokensBeforeDeletingUser' ], 10 );
-		add_action( 'init', [ $this, 'autoGenerateTokenAfterActivatingPlugin' ], 1 );
+//		add_action( 'init', [ $this, 'autoGenerateTokenAfterActivatingPlugin' ], 1 );
 	}
 
-	function autoGenerateTokenAfterActivatingPlugin() {
+	function autoGenerateTokenAfterActivatingPlugin(): bool {
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
 		/**
 		 * @var $oGenerateTokenController GenerateTokenController
 		 */
@@ -58,6 +61,8 @@ final class GenerateTokenController extends Core {
 			catch ( Exception $e ) {
 			}
 		}
+
+		return true;
 	}
 
 	/**
@@ -117,7 +122,7 @@ final class GenerateTokenController extends Core {
 	 *
 	 * @return array
 	 */
-	public function createRefreshTokenAfterUserRegisteredAccount( $userId, $isDirectly = false ): array {
+	public function createRefreshTokenAfterUserRegisteredAccount( $userId, bool $isDirectly = false ): array {
 		if ( isset( $_GET['import'] ) && $_GET['import'] == 'wordpress' ) {
 			return [
 				'error' => [
@@ -186,12 +191,15 @@ final class GenerateTokenController extends Core {
 	}
 
 	/**
+	 *
 	 * @param $userId
 	 *
 	 * @return bool
 	 */
-	public function removeAccessTokenAfterLogout( $userId ) {
-		return $this->revokeAccessToken( $userId );
+	public function removeAccessTokenAfterLogout( $userId ): bool {
+		do_action( 'wiloke-jwt/Controllers/GenerateTokenController/removedAccessTokenAfterLogout', $userId );
+
+		return $this->clearCookie();
 	}
 
 	/**
@@ -200,7 +208,7 @@ final class GenerateTokenController extends Core {
 	 *
 	 * @return bool
 	 */
-	public function filterRevokeAccessToken( $status, $userId ) {
+	public function filterRevokeAccessToken( $status, $userId ): bool {
 		return $this->revokeAccessToken( $userId );
 	}
 
@@ -283,13 +291,10 @@ final class GenerateTokenController extends Core {
 	 *
 	 * @return bool
 	 */
-	public function handleTokenAfterUserSetLoggedInCookie( $logged_in_cookie, $expire, $expiration, $user_id ) {
-		if ( $this->handlingUserLogin ) {
-			return false;
-		}
-
+	public function handleTokenAfterUserSetLoggedInCookie( $logged_in_cookie, $expire, $expiration, $user_id ): bool {
 		$oUser = new WP_User( $user_id );
-		$this->handleTokenAfterUserSignedIn( $oUser->user_email, $oUser );
+
+		return $this->handleTokenAfterUserSignedIn( $oUser->user_email, $oUser );
 	}
 
 	/**
@@ -298,10 +303,11 @@ final class GenerateTokenController extends Core {
 	 *
 	 * @return bool
 	 */
-	public function handleTokenAfterUserSignedIn( $userEmail, $oUser ) {
-		if ( $this->handlingUserLogin ) {
+	public function handleTokenAfterUserSignedIn( $userEmail, $oUser ): bool {
+		if ( $this->handlingUserLogin || empty( $oUser ) || is_wp_error( $oUser ) ) {
 			return false;
 		}
+
 		$this->handlingUserLogin = true;
 		$refreshToken            = Option::getUserRefreshToken( $oUser->ID );
 
