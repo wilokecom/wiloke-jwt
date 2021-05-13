@@ -10,7 +10,7 @@ use WilokeJWTTest\CommonController;
 class RegisterAccountTest extends CommonController
 {
     use ClientIP;
-    private $aConfigData=[
+    private array $aConfigData =[
             'client_session' => '123443434',
             'app_id'         => 'app_id_606fd51714cd6',
             'app_secret'     => '11e45a2723eed54de25f7c194b58312f'
