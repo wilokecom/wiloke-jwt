@@ -106,7 +106,7 @@ class Core {
 			$host,
 			is_ssl()
 		);
-
+		var_dump('xxx');die();
 		$accessToken = Option::getUserToken( $userId );
 		$this->setBlackListAccessToken( $userId, $accessToken );
 
@@ -194,13 +194,11 @@ class Core {
 	protected function renewAccessToken( $refreshToken ) {
 		$oInfo = $this->verifyToken( $refreshToken, 'refresh_token' );
 		$oUser = new WP_User( $oInfo->userID );
-
 		if ( empty( $oUser ) || is_wp_error( $oUser ) ) {
 			throw new Exception( esc_html__( 'The user has been removed', 'wiloke-jwt' ) );
 		}
-
 		$this->revokeAccessToken( $oUser->ID );
-
+        var_dump('xx');die();
 		return $this->generateToken( $oUser );
 	}
 
