@@ -36,7 +36,8 @@ class Core {
 	 *
 	 * @return bool
 	 */
-	protected function isBlackListAccessToken( $userId, $accessToken ) {
+	protected function isBlackListAccessToken( $userId, $accessToken ): bool
+    {
 		$aBlackList = $this->getBlackListAccessToken( $userId );
 
 		return in_array( $accessToken, $aBlackList );
@@ -48,11 +49,11 @@ class Core {
 	 *
 	 * @return array
 	 */
-	private function setBlackListAccessToken( $userId, $accessToken ): array {
+	protected function setBlackListAccessToken( $userId, $accessToken ) {
 		$aBlackLists = $this->getBlackListAccessToken( $userId );
-		$aBlackLists = array_splice( $aBlackLists, 0, 49 ); // maximum 50 items only
-		array_unshift( $aBlackLists, $accessToken );
 
+		$aBlackLists = array_splice( $aBlackLists, 0, 49 ); // maximum 50 items only
+        array_unshift( $aBlackLists, $accessToken );
 		update_user_meta( $userId, 'black_list_access_token', $aBlackLists );
 
 		return $aBlackLists;
@@ -139,17 +140,8 @@ class Core {
 	 * @return bool
 	 */
 	protected function revokeAccessToken( $userId ): bool {
-		$host = parse_url( home_url( '/' ), PHP_URL_HOST );
-		setcookie(
-			'wiloke_my_jwt',
-			'',
-			current_time( 'timestamp' ) - 10000000,
-			'/',
-			$host,
-			is_ssl()
-		);
-		var_dump('xxx');die();
-		$accessToken = Option::getUserToken( $userId );
+		unset($_COOKIE['wiloke_my_jwt']);
+		$accessToken = Option::getUserAccessToken( $userId );
 		$this->setBlackListAccessToken( $userId, $accessToken );
 
 		return Option::revokeAccessToken( $userId );
@@ -233,14 +225,16 @@ class Core {
 	 * @return string
 	 * @throws Exception
 	 */
-	protected function renewAccessToken( $refreshToken ) {
+	protected function renewAccessToken( $refreshToken ): string
+    {
 		$oInfo = $this->verifyToken( $refreshToken, 'refresh_token' );
 		$oUser = new WP_User( $oInfo->userID );
 		if ( empty( $oUser ) || is_wp_error( $oUser ) ) {
 			throw new Exception( esc_html__( 'The user has been removed', 'wiloke-jwt' ) );
 		}
-		$this->revokeAccessToken( $oUser->ID );
-        var_dump('xx');die();
+		if (!empty(Option::getUserAccessToken($oInfo->userID ))){
+            $this->revokeAccessToken( $oUser->ID );
+        }
 		return $this->generateToken( $oUser );
 	}
 
@@ -267,7 +261,6 @@ class Core {
 	 */
 	protected function generateToken( WP_User $oUser, $ignoreSetCookie = false ) {
 		$token = Option::getUserToken( $oUser->ID );
-
 		if ( ! empty( $token ) ) {
 			try {
 				$oUserInfo = $this->verifyToken( $token );
@@ -276,13 +269,11 @@ class Core {
 
 			}
 		}
-
 		if ( ! isset( $oUserInfo ) ) {
 			$aPayload = [
 				'message' => $this->generateTokenMsg( $oUser ),
 				'exp'     => $this->getTokenExpired()
 			];
-
 			$token = JWT::encode( $aPayload, Option::getAccessTokenKey() );
 			Option::saveUserToken( $token, $oUser->ID );
 		}
