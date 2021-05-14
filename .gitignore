@@ -6,3 +6,4 @@ package-lock.json
 wiloke-jwt/*
 wiloke-jwt.zip
 phpunit.xml
+vendor

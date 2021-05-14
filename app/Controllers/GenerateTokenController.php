@@ -74,7 +74,6 @@ final class GenerateTokenController extends Core {
 				'code' => 200
 			];
 		}
-
 		if ( empty( $userId ) ) {
 			return [
 				'msg'  => 'Invalid User Id',
@@ -95,6 +94,7 @@ final class GenerateTokenController extends Core {
 		if ( ! empty( $refreshToken ) ) {
 			try {
 				$accessToken = $this->renewAccessToken( $refreshToken );
+                var_dump($accessToken);die();
 				$aResponse   = [
 					'accessToken'  => $accessToken,
 					'refreshToken' => $refreshToken,
