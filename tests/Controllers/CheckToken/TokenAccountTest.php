@@ -15,13 +15,7 @@ class TokenAccountTest extends CommonController
             'username' => 'test',
             'password' => 'test'
         ];
-
-    public function createRandomUser()
-    {
-        return wp_create_user(uniqid($this->aDataUser['username']), $this->aDataUser['password']);
-    }
-
-    public function createUserDatabase()
+    public function createUserDatabase()//tạo user
     {
         if (username_exists($this->aDataUser['username'])) {
             return get_user_by('login', $this->aDataUser['username'])->ID;
@@ -36,7 +30,7 @@ class TokenAccountTest extends CommonController
         $accessToken = Option::getUserAccessToken($userId);
         $aResponse = apply_filters('wiloke-jwt/filter/verify-token',
             [],
-            $accessToken);
+            $accessToken);//kiep tra lai accessToken dung khong
         $this->assertIsArray($aResponse);
         $this->assertEquals(200, $aResponse['code']);
         $this->assertEquals($userId, $aResponse['userID']);
@@ -45,14 +39,14 @@ class TokenAccountTest extends CommonController
     /**
      * @depends testTokenAfterRegisterAccount
      */
-    public function testRenewToken($userId)
+    public function testRenewToken($userId)// kiem tra lấy lại accessToken hết hạn,có lấy lại dc k
     {
         sleep(15);
         $accessToken = Option::getUserAccessToken($userId);
         $aResponse = apply_filters('wiloke-jwt/filter/verify-token', [], $accessToken);
-        $this->assertEquals('Expired token', $aResponse['msg']);
+        $this->assertEquals('Expired token', $aResponse['msg']);// kiem tra đúng hết hạn chưa
         $refreshToken = Option::getUserRefreshToken($userId);
-        $aResponse = apply_filters('wiloke/filter/renew-access-token', [], $refreshToken,'');
+        $aResponse = apply_filters('wiloke/filter/renew-access-token', [], $refreshToken,'');//lấy lại accessToken
         $this->assertEquals(200, $aResponse['code']);
         $this->assertEquals($userId, $aResponse['userID']);
 
@@ -61,7 +55,7 @@ class TokenAccountTest extends CommonController
     {
         $userId=$this->createUserDatabase();
         $accessToken=Option::getUserAccessToken($userId);
-        $aResponse = apply_filters('wiloke/filter/set-black-list-access-token', [],$userId,$accessToken);
+        $aResponse = apply_filters('wiloke/filter/set-black-list-access-token', [],$userId,$accessToken);//
         $this->assertEquals('success',$aResponse['status']);
         $this->assertEquals(true,(array_search($accessToken,$aResponse['data'])!==false));
         $aResponse = apply_filters('wiloke/filter/is-black-list-access-token', [],$userId,$accessToken);
