@@ -49,7 +49,7 @@ class Core {
 	 *
 	 * @return array
 	 */
-	protected function setBlackListAccessToken( $userId, $accessToken ) {
+	protected function setBlackListAccessToken( $userId, $accessToken ):array {
 		$aBlackLists = $this->getBlackListAccessToken( $userId );
 
 		$aBlackLists = array_splice( $aBlackLists, 0, 49 ); // maximum 50 items only
