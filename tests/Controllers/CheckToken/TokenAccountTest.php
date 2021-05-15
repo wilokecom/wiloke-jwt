@@ -9,10 +9,11 @@ use WilokeJWTTest\CommonController;
 
 class TokenAccountTest extends CommonController
 {
+    //Bật Test Mode 10 s
     public array $aDataUser
         = [
-            'username' => 'test1323',
-            'password' => 'test1233'
+            'username' => 'test',
+            'password' => 'test'
         ];
 
     public function createRandomUser()
@@ -29,57 +30,41 @@ class TokenAccountTest extends CommonController
         }
     }
 
-    public function testTokenAfterRegisterAccount()
+    public function testTokenAfterRegisterAccount()//Test Khi Tài Khoản Đăng ký Thành Công Có Tạo Ra Token Đúng Không
     {
         $userId = $this->createUserDatabase();
-
         $accessToken = Option::getUserAccessToken($userId);
-        var_dump( Option::getUserRefreshToken($userId));
         $aResponse = apply_filters('wiloke-jwt/filter/verify-token',
             [],
             $accessToken);
         $this->assertIsArray($aResponse);
-//        $this->assertEquals(200, $aResponse['code']);
-//        $this->assertEquals($userId, $aResponse['userID']);
+        $this->assertEquals(200, $aResponse['code']);
+        $this->assertEquals($userId, $aResponse['userID']);
         return $userId;
     }
-
     /**
      * @depends testTokenAfterRegisterAccount
      */
-    public function testSetTime($userId)
-    {
-        $status = Option::testModeToken();
-        $this->assertEquals(true, $status);
-
-        return $userId;
-    }
-
-    /**
-     * @depends testSetTime
-     */
     public function testRenewToken($userId)
     {
-        (new GenerateTokenController())->handleTokenAfterUserSignedIn('', get_user_by('ID', $userId));
-        sleep(30);
+        sleep(15);
         $accessToken = Option::getUserAccessToken($userId);
-        var_dump($accessToken);
         $aResponse = apply_filters('wiloke-jwt/filter/verify-token', [], $accessToken);
         $this->assertEquals('Expired token', $aResponse['msg']);
         $refreshToken = Option::getUserRefreshToken($userId);
-        $aResponse = apply_filters('wiloke/filter/renew-access-token', [], $refreshToken,$accessToken);
-
-        var_dump($aResponse);die();
+        $aResponse = apply_filters('wiloke/filter/renew-access-token', [], $refreshToken,'');
+        $this->assertEquals(200, $aResponse['code']);
+        $this->assertEquals($userId, $aResponse['userID']);
 
     }
-    public function testBlacklistToken(){
-        $userId=$this->createRandomUser();
+    public function testBlacklistToken()//Kiểm Tra Khi Cho 1 User Vào Danh Sách Đen Có Đúng Hay K
+    {
+        $userId=$this->createUserDatabase();
         $accessToken=Option::getUserAccessToken($userId);
         $aResponse = apply_filters('wiloke/filter/set-black-list-access-token', [],$userId,$accessToken);
-
         $this->assertEquals('success',$aResponse['status']);
-        $this->assertEquals(true,(array_search($userId,$aResponse['data'])!==false));
+        $this->assertEquals(true,(array_search($accessToken,$aResponse['data'])!==false));
         $aResponse = apply_filters('wiloke/filter/is-black-list-access-token', [],$userId,$accessToken);
-        var_dump($aResponse);die();
+        $this->assertEquals('success',$aResponse['status']);
     }
 }

@@ -52,7 +52,7 @@ final class GenerateTokenController extends Core
             return [
                 'status' => 'success',
                 'msg'    => 'list black list',
-                'data'  => $aData
+                'data'   => $aData
             ];
         }
 
@@ -327,14 +327,14 @@ final class GenerateTokenController extends Core
         }
 
         try {
-
             $this->verifyToken($accessToken);
             if (Option::isTestMode()) {
                 $refreshToken = Option::getUserRefreshToken($oUser->ID);
                 $accessToken = $this->renewAccessToken($refreshToken);
-                Option::saveUserToken($accessToken, (string)$oUser->ID);
-                Option::saveUserRefreshToken($refreshToken, (string)$oUser->ID);
-                $this->storeAccessTokenToCookie($accessToken);
+                Option::saveUserRefreshToken($refreshToken, $oUser->ID);
+                Option::saveUserToken($accessToken, $oUser->ID);
+                return true;
+                //$this->storeAccessTokenToCookie($accessToken);
             }
 
             return true;
@@ -411,7 +411,6 @@ final class GenerateTokenController extends Core
 
         try {
             $accessToken = !empty($oldAccessToken) ? $oldAccessToken : Option::getUserToken($oUserInfo->userID);
-            var_dump($accessToken);
             if ($this->isAccessTokenExpired($accessToken)) {
                 return [
                     'accessToken' => $this->renewAccessToken($refreshToken),
