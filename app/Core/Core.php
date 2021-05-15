@@ -140,7 +140,7 @@ class Core {
 	 * @return bool
 	 */
 	protected function revokeAccessToken( $userId ): bool {
-		unset($_COOKIE['wiloke_my_jwt']);
+		//unset($_COOKIE['wiloke_my_jwt']);
 		$accessToken = Option::getUserAccessToken( $userId );
 		$this->setBlackListAccessToken( $userId, $accessToken );
 
@@ -186,7 +186,6 @@ class Core {
 	protected function verifyToken( $token, $type = 'access_token' ) {
 		$errMsg = '';
 		$oUser  = (object) [];
-
 		try {
 			if ( $type === 'refresh_token' ) {
 				$key = Option::getRefreshTokenKey();
@@ -215,7 +214,6 @@ class Core {
 		if ( ! empty( $errMsg ) ) {
 			throw new Exception( $errMsg );
 		}
-
 		return $oUser;
 	}
 
@@ -260,7 +258,7 @@ class Core {
 	 * @return mixed|string
 	 */
 	protected function generateToken( WP_User $oUser, $ignoreSetCookie = false ) {
-		$token = Option::getUserToken( $oUser->ID );
+	    $token = Option::getUserToken( $oUser->ID );
 		if ( ! empty( $token ) ) {
 			try {
 				$oUserInfo = $this->verifyToken( $token );
@@ -277,8 +275,7 @@ class Core {
 			$token = JWT::encode( $aPayload, Option::getAccessTokenKey() );
 			Option::saveUserToken( $token, $oUser->ID );
 		}
-
-		$this->setAccessTokenCookie( $token );
+		//$this->setAccessTokenCookie( $token );
 		do_action( 'wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $ignoreSetCookie );
 
 		return $token;
