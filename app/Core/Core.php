@@ -47,9 +47,9 @@ class Core {
 	 * @param $userId
 	 * @param $accessToken
 	 *
-	 * @return array|mixed
+	 * @return array
 	 */
-	protected function setBlackListAccessToken( $userId, $accessToken ) {
+	private function setBlackListAccessToken( $userId, $accessToken ): array {
 		$aBlackLists = $this->getBlackListAccessToken( $userId );
 
 		$aBlackLists = array_splice( $aBlackLists, 0, 49 ); // maximum 50 items only
@@ -57,6 +57,20 @@ class Core {
 		update_user_meta( $userId, 'black_list_access_token', $aBlackLists );
 
 		return $aBlackLists;
+	}
+
+	protected function clearTokens(): bool {
+		$this->clearAccessTokenCookie();
+		$this->clearRefreshTokenCookie();
+
+		return true;
+	}
+
+	protected function setTokens(): bool {
+		$this->setAccessTokenCookie();
+		$this->setRefreshAccessTokenToCookie();
+
+		return true;
 	}
 
 	protected function clearAccessTokenCookie(): bool {
@@ -73,13 +87,28 @@ class Core {
 		return true;
 	}
 
+	protected function clearRefreshTokenCookie(): bool {
+		$host = parse_url( home_url( '/' ), PHP_URL_HOST );
+		setcookie(
+			'wiloke_my_rf_token',
+			'',
+			current_time( 'timestamp' ) - 10000000,
+			'/',
+			$host,
+			is_ssl()
+		);
+
+		return true;
+	}
+
 	/**
 	 * @param $token
 	 *
 	 * @return bool
 	 */
-	protected function setAccessTokenCookie( $token ): bool {
-		$host = parse_url( home_url( '/' ), PHP_URL_HOST );
+	protected function setAccessTokenCookie( $token = '' ): bool {
+		$token = empty( $token ) ? Option::getUserAccessToken() : $token;
+		$host  = parse_url( home_url( '/' ), PHP_URL_HOST );
 		setcookie(
 			'wiloke_my_jwt',
 			$token,
@@ -90,6 +119,19 @@ class Core {
 		);
 
 		return true;
+	}
+
+	protected function setRefreshAccessTokenToCookie( $refreshToken = '' ) {
+		$refreshToken = empty( $refreshToken ) ? Option::getUserRefreshToken() : $refreshToken;
+		$host         = parse_url( home_url( '/' ), PHP_URL_HOST );
+		setcookie(
+			'wiloke_my_rf_token',
+			$refreshToken,
+			$this->getTokenExpired(),
+			'/',
+			$host,
+			is_ssl()
+		);
 	}
 
 	/**
