@@ -40,7 +40,7 @@ class Users {
 	 *
 	 * @return string
 	 */
-	private function cleanUsername( $username ): string {
+	public static function cleanUsername( $username ): string {
 		return sanitize_title( str_replace( '_', '-', sanitize_user( $username ) ) );
 	}
 }
