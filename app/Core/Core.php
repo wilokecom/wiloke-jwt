@@ -36,8 +36,7 @@ class Core {
 	 *
 	 * @return bool
 	 */
-	protected function isBlackListAccessToken( $userId, $accessToken ): bool
-    {
+	protected function isBlackListAccessToken( $userId, $accessToken ): bool {
 		$aBlackList = $this->getBlackListAccessToken( $userId );
 
 		return in_array( $accessToken, $aBlackList );
@@ -49,11 +48,11 @@ class Core {
 	 *
 	 * @return array
 	 */
-	protected function setBlackListAccessToken( $userId, $accessToken ):array {
+	protected function setBlackListAccessToken( $userId, $accessToken ): array {
 		$aBlackLists = $this->getBlackListAccessToken( $userId );
 
 		$aBlackLists = array_splice( $aBlackLists, 0, 49 ); // maximum 50 items only
-        array_unshift( $aBlackLists, $accessToken );
+		array_unshift( $aBlackLists, $accessToken );
 		update_user_meta( $userId, 'black_list_access_token', $aBlackLists );
 
 		return $aBlackLists;
@@ -183,7 +182,7 @@ class Core {
 	 * @return mixed
 	 * @throws Exception
 	 */
-	protected function verifyToken( $token, $type = 'access_token' ) {
+	protected function verifyToken( $token, string $type = 'access_token' ) {
 		$errMsg = '';
 		$oUser  = (object) [];
 		try {
@@ -206,6 +205,9 @@ class Core {
 				}
 			}
 
+			if ( $this->isBlackListAccessToken( $oUser->userID, $token ) ) {
+				$errMsg = esc_html__( 'The token has been blocked', 'wiloke-jwt' );
+			}
 		}
 		catch ( Exception $oE ) {
 			$errMsg = $oE->getMessage();
@@ -214,6 +216,7 @@ class Core {
 		if ( ! empty( $errMsg ) ) {
 			throw new Exception( $errMsg );
 		}
+
 		return $oUser;
 	}
 
@@ -223,16 +226,16 @@ class Core {
 	 * @return string
 	 * @throws Exception
 	 */
-	protected function renewAccessToken( $refreshToken ): string
-    {
+	protected function renewAccessToken( $refreshToken ): string {
 		$oInfo = $this->verifyToken( $refreshToken, 'refresh_token' );
 		$oUser = new WP_User( $oInfo->userID );
 		if ( empty( $oUser ) || is_wp_error( $oUser ) ) {
 			throw new Exception( esc_html__( 'The user has been removed', 'wiloke-jwt' ) );
 		}
-		if (!empty(Option::getUserAccessToken($oInfo->userID ))){
-            $this->revokeAccessToken( $oUser->ID );
-        }
+		if ( ! empty( Option::getUserAccessToken( $oInfo->userID ) ) ) {
+			$this->revokeAccessToken( $oUser->ID );
+		}
+
 		return $this->generateToken( $oUser );
 	}
 
@@ -258,7 +261,7 @@ class Core {
 	 * @return mixed|string
 	 */
 	protected function generateToken( WP_User $oUser, $ignoreSetCookie = false ) {
-	    $token = Option::getUserToken( $oUser->ID );
+		$token = Option::getUserToken( $oUser->ID );
 		if ( ! empty( $token ) ) {
 			try {
 				$oUserInfo = $this->verifyToken( $token );
@@ -272,7 +275,7 @@ class Core {
 				'message' => $this->generateTokenMsg( $oUser ),
 				'exp'     => $this->getTokenExpired()
 			];
-			$token = JWT::encode( $aPayload, Option::getAccessTokenKey() );
+			$token    = JWT::encode( $aPayload, Option::getAccessTokenKey() );
 			Option::saveUserToken( $token, $oUser->ID );
 		}
 		//$this->setAccessTokenCookie( $token );
@@ -305,11 +308,16 @@ class Core {
 	 */
 	protected function isAccessTokenExpired( $accessToken ): bool {
 		try {
-			JWT::decode( $accessToken, Option::getAccessTokenKey(), [ 'HS256' ] );
-			//            $oUserInfo = json_decode($oParse->message);
-			//
-			//            $userAccessToken = Option::getUserToken($oUserInfo->userID);
-			//            $this->verifyToken($userAccessToken);
+			$oParse = JWT::decode( $accessToken, Option::getAccessTokenKey(), [ 'HS256' ] );
+			$oUser  = json_decode( $oParse->message );
+			if (empty( $oUser) || !isset( $oUser->userID)) {
+				return true;
+			}
+
+			if ($this->isBlackListAccessToken( $oUser->userID, $accessToken)) {
+				return true;
+			}
+
 			return false;
 		}
 		catch ( Exception $exception ) {
