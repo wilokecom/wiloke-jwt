@@ -29,6 +29,7 @@ class TokenAccountTest extends CommonController {
 			wp_set_password( $this->aDataUser['password'], $oUser->ID );
 			wp_signon( $this->aDataUser['login'], $this->aDataUser['password'] );
 			self::$isTestAccountExistedBefore = true;
+			self::$testUserId                 = $oUser->ID;
 
 			return $oUser->ID;
 		} else {
@@ -37,13 +38,22 @@ class TokenAccountTest extends CommonController {
 	}
 
 	public function createNewAccount() {
-		return self::$testUserId = wp_create_user( uniqid( $this->aDataUser['username'] ),
-			$this->aDataUser['password'] );
+		return self::$testUserId = wp_create_user(
+			uniqid( $this->aDataUser['username'] ),
+			$this->aDataUser['password']
+		);
 	}
 
-	private function deleteUser( $userId ) {
+	public static function deleteUser( $userId ) {
 		require_once( ABSPATH . 'wp-admin/includes/user.php' );
 		wp_delete_user( $userId );
+	}
+
+	public static function tearDownAfterClass() {
+		/*** Xoa tai khoan test neu tao moi ***/
+		if ( self::$isTestAccountExistedBefore ) {
+			self::deleteUser( self::$testUserId );
+		}
 	}
 
 	public function testTokenAfterRegisterAccount()//Test Khi Tài Khoản Đăng ký Thành Công Có Tạo Ra Token Đúng Không
@@ -57,7 +67,7 @@ class TokenAccountTest extends CommonController {
 		$this->assertIsArray( $aResponse );
 		$this->assertEquals( 200, $aResponse['code'] );
 		$this->assertEquals( $userId, $aResponse['userID'] );
-		$this->deleteUser( $userId );
+		self::deleteUser( $userId );
 
 		return $userId;
 	}
@@ -152,12 +162,6 @@ class TokenAccountTest extends CommonController {
 		);
 		$this->assertEquals( 401, $aResponse['code'] );
 		$this->assertEquals( true, strpos( $aResponse['msg'], 'Signature' ) !== false );
-
-		/*** Xoa tai khoan test neu tao moi ***/
-		if ( self::$isTestAccountExistedBefore ) {
-			$this->deleteUser( $userId );
-		} else {
-			apply_filters( 'wiloke/filter/renew-access-token', [], $refreshToken, '' );
-		}
+		apply_filters( 'wiloke/filter/renew-access-token', [], $refreshToken, '' );
 	}
 }
