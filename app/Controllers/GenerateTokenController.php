@@ -249,7 +249,7 @@ final class GenerateTokenController extends Core
             return [
                 'code'         => 200,
                 'msg'          => esc_html__('The token has been revoked', 'wiloke-jwt'),
-                'accessToken'  => $this->generateRefreshToken($oUser),
+                'accessToken'  => $this->generateToken($oUser),
                 'refreshToken' => $this->generateRefreshToken($oUser)
             ];
         } catch (Exception $exception) {

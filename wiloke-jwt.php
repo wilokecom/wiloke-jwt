@@ -43,6 +43,8 @@ $oVerifyTokenController   = new \WilokeJWT\Controllers\VerifyTokenController();
 //new UserProfileController;
 new PostTypeRegistry;
 new LoginController;
+new \WilokeJWT\Controllers\UserManagementTokenController();
+new \WilokeJWT\Controllers\HandleAjaxUserController();
 
 register_activation_hook( __FILE__, function () {
 	do_action( 'wiloke_jwt_plugin_activated' );

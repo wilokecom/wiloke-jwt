@@ -19,7 +19,6 @@ class UserProfileController
 		add_action('wp_ajax_revoke_my_token', [$this, 'revokeMyToken']);
 		add_action('wp_ajax_create_token', [$this, 'createToken']);
 	}
-
 	private function getUserId()
 	{
 		if (!current_user_can('administrator')) {
