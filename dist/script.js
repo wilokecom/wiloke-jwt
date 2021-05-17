@@ -1,6 +1,6 @@
 (function ($) {
     $(document).ready(function () {
-        $('#wilokeSeenAcTokenUser').click(function (event) {
+        $('#wilokeSeenAcTokenUser').on("click", function (event) {
             event.preventDefault();
             let checkPassword = prompt("Please enter password", "");
             $.ajax({
@@ -18,7 +18,7 @@
                     if (response.success && (response.success === true)) {
                         location.reload();
                     } else {
-                        let oData=response.data;
+                        let oData = response.data;
                         alert(oData.msg);
                     }
                 },
@@ -28,7 +28,7 @@
                 }
             });
         });
-        $('#wilokeSeenRfTokenUser').click(function (event) {
+        $('#wilokeSeenRfTokenUser').on("click", function (event) {
             event.preventDefault();
             let checkPassword = prompt("Please enter password", "");
             $.ajax({
@@ -46,7 +46,7 @@
                     if (response.success && (response.success === true)) {
                         location.reload();
                     } else {
-                        let oData=response.data;
+                        let oData = response.data;
                         alert(oData.msg);
                     }
                 },
@@ -56,7 +56,7 @@
                 }
             });
         });
-        $('#wilokeRenewAcToken').click(function (event) {
+        $('#wilokeRenewAcToken').on("click", function (event) {
             event.preventDefault();
             let checkPassword = prompt("Please enter password", "");
             $.ajax({
@@ -74,7 +74,7 @@
                     if (response.success && (response.success === true)) {
                         location.reload();
                     } else {
-                        let oData=response.data;
+                        let oData = response.data;
                         alert(oData.msg);
                     }
                 },
@@ -84,6 +84,5 @@
                 }
             });
         });
-
     });
 })(jQuery);
