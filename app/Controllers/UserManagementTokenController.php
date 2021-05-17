@@ -71,7 +71,7 @@ class UserManagementTokenController
                                     <span>
                                         <input type="button"
                                                class="button button-primary"
-                                               value="<?php echo esc_html_e('Renew Token', 'wiloke-jwt'); ?>"
+                                               value="<?php echo esc_html__('Renew Token', 'wiloke-jwt'); ?>"
                                                id="wilokeRenewAcToken"
                                                data-userID="<?php echo esc_attr($userId); ?>">
                                     </span>
