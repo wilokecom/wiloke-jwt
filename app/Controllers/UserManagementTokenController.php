@@ -10,6 +10,8 @@ use WilokeJWT\Illuminate\Message\MessageFactory;
 
 class UserManagementTokenController
 {
+    private array $aAllowPages = ['profile.php', 'user-edit.php'];
+
     public function __construct()
     {
         add_action('show_user_profile', [$this, 'handleRenewAccessToken']);
@@ -99,7 +101,7 @@ class UserManagementTokenController
 
     public function enqueueScripts($hook)
     {
-        if (in_array($hook, ['profile.php', 'user-edit.php'])) {
+        if (in_array($hook, $this->aAllowPages)) {
             wp_enqueue_script('ManagementToken',
                 WILOKE_JWT_URL . 'dist/script.js',
                 ['jquery'],
@@ -117,20 +119,24 @@ class UserManagementTokenController
             if ($_POST['password'] ?? '') {
                 $oUser = get_userdata(get_current_user_id());
                 if (wp_check_password($_POST['password'], $oUser->data->user_pass, $oUser->ID)) {
-                    Session::sessionStart();
-                    setcookie('enableAcTokenUser' . $_POST['userID'], true, time() + 36000);
+                    $this->setCookie('enableAcTokenUser' . $_POST['userID'], true, 10);
                     return MessageFactory::factory('ajax')->success('The token is enable success', []);
                 } else {
-                    return MessageFactory::factory('ajax')->error('The password incorrect', 401);
+                    return MessageFactory::factory('ajax')->error('The password is incorrect', 401);
                 }
             } else {
-                return MessageFactory::factory('ajax')->error('Please enter a password', 401);
+                return MessageFactory::factory('ajax')->error('Please enter your password', 401);
             }
-        }else{
+        } else {
             return MessageFactory::factory('ajax')
                 ->error('The account is not administrator or the current visitor is not a logged in user', 401);
         }
-        die();
+    }
+
+    public function setCookie(string $nameCookie, $value, int $hours): bool
+    {
+        Session::sessionStart();
+        return setcookie($nameCookie, $value, time() + 3600 * $hours);
     }
 
     public function handleAjaxSeenRfToken()
@@ -139,20 +145,18 @@ class UserManagementTokenController
             if ($_POST['password'] ?? '') {
                 $oUser = get_userdata(get_current_user_id());
                 if (wp_check_password($_POST['password'], $oUser->data->user_pass, $oUser->ID)) {
-                    Session::sessionStart();
-                    setcookie('enableRfTokenUser' . $_POST['userID'], true, time() + 36000);
+                    $this->setCookie('enableRfTokenUser' . $_POST['userID'], true, 10);
                     return MessageFactory::factory('ajax')->success('The token is enable success');
                 } else {
-                    return MessageFactory::factory('ajax')->error('The password incorrect', 401);
+                    return MessageFactory::factory('ajax')->error('The password is incorrect', 401);
                 }
             } else {
-                return MessageFactory::factory('ajax')->error('Please enter a password', 401);
+                return MessageFactory::factory('ajax')->error('Please enter your password', 401);
             }
-        }else{
+        } else {
             return MessageFactory::factory('ajax')
                 ->error('The account is not administrator or the current visitor is not a logged in user', 401);
         }
-        die();
     }
 
     public function handleAjaxRenewToken()
@@ -161,8 +165,10 @@ class UserManagementTokenController
             $oUser = get_userdata(get_current_user_id());
             if (wp_check_password($_POST['password'], $oUser->data->user_pass, $oUser->ID)) {
                 if ((get_current_user_id() == $_POST['userId']) || current_user_can('administrator')) {
-                    $aResponse = apply_filters('wiloke/filter/create-access-token-and-refresh-token',
-                        get_userdata($_POST['userId']));
+                    $aResponse = apply_filters(
+                        'wiloke/filter/create-access-token-and-refresh-token',
+                        get_userdata($_POST['userId'])
+                    );
                     if ($aResponse['code'] == 200) {
                         Option::saveUserToken($aResponse['accessToken'], $_POST['userId']);
                         Option::saveUserRefreshToken($aResponse['refreshToken'], $_POST['userId']);
@@ -174,11 +180,10 @@ class UserManagementTokenController
                 }
 
             } else {
-                return MessageFactory::factory('ajax')->error('The password incorrect', 401);
+                return MessageFactory::factory('ajax')->error('The password is incorrect', 401);
             }
         } else {
-            return MessageFactory::factory('ajax')->error('Please enter a password', 401);
+            return MessageFactory::factory('ajax')->error('Please enter your password', 401);
         }
-        die();
     }
 }
