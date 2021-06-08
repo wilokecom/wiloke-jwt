@@ -4,10 +4,9 @@ namespace WilokeJWT\Controllers;
 
 use Exception;
 use Firebase\JWT\JWT;
-use HSBlogCore\Helpers\Cookie;
-use HSBlogCore\Helpers\Session;
 use WilokeJWT\Core\Core;
 use WilokeJWT\Helpers\Option;
+use WilokeJWT\Helpers\Session;
 use WP_User;
 
 /**
@@ -17,7 +16,7 @@ use WP_User;
 final class GenerateTokenController extends Core
 {
 	private static bool $handlingUserLogin = false;
-	private static bool $clearingToken     = false;
+	private static bool $clearingToken = false;
 
 	/**
 	 * GenerateTokenController constructor.
@@ -25,12 +24,16 @@ final class GenerateTokenController extends Core
 	public function __construct()
 	{
 		add_action('set_logged_in_cookie', [$this, 'handleTokenAfterUserSetLoggedInCookie'], 10, 4);
-//		add_action( 'wp_login', [ $this, 'handleTokenAfterUserSignedIn' ], 10, 2 );
 		add_action('wiloke-jwt/created-access-token', [$this, 'storeAccessTokenToCookie'], 10, 3);
-		add_action('wiloke-jwt/created-access-and-refresh-token', [$this, 'storeAccessAndRefreshTokenToCookie'], 10,
-			2);
-		add_action('wp_logout', [$this, 'removeAccessTokenAfterLogout']);
-//		add_action( 'user_register', [ $this, 'createRefreshTokenAfterUserRegisteredAccount' ] );
+		add_action(
+			'wiloke-jwt/created-access-and-refresh-token',
+			[$this, 'storeAccessAndRefreshTokenToCookie'],
+			10,
+			2
+		);
+
+		add_action('wiloke/jwt/clear-token', [$this, 'removeAccessTokenAfterLogout']);
+		add_action('clear_auth_cookie', [$this, 'removeAccessTokenAfterLogout']);
 		add_filter('wiloke/filter/get-refresh-token', [$this, 'getUserRefreshToken']);
 		add_filter('wiloke/filter/revoke-access-token', [$this, 'filterRevokeAccessToken'], 10, 2);
 		add_filter('wiloke/filter/revoke-refresh-access-token', [$this, 'filterRevokeRefreshAccessToken'], 10, 2);
@@ -38,7 +41,6 @@ final class GenerateTokenController extends Core
 		add_filter('wiloke/filter/is-access-token-expired', [$this, 'filterIsTokenExpired'], 10, 2);
 		add_action('clean_user_cache', [$this, 'maybeRevokeRefreshPasswordAfterUpdatingUser'], 10, 2);
 		add_action('delete_user', [$this, 'deleteTokensBeforeDeletingUser'], 10);
-//		add_action( 'init', [ $this, 'autoGenerateTokenAfterActivatingPlugin' ], 1 );
 	}
 
 	function autoGenerateTokenAfterActivatingPlugin(): bool
@@ -203,9 +205,17 @@ final class GenerateTokenController extends Core
 	 *
 	 * @return bool
 	 */
-	public function removeAccessTokenAfterLogout($userId): bool
+	public function removeAccessTokenAfterLogout(): bool
 	{
-		do_action('wiloke-jwt/Controllers/GenerateTokenController/removedAccessTokenAfterLogout', $userId);
+		if (self::$clearingToken) {
+			return false;
+		}
+
+		self::$clearingToken = true;
+		do_action(
+			'wiloke-jwt/Controllers/GenerateTokenController/removedAccessTokenAfterLogout',
+			get_current_user_id()
+		);
 		\WilokeShopifyLogin\Helpers\Session::destroySession('handleAuth');
 		return $this->clearCookie();
 	}
@@ -328,6 +338,7 @@ final class GenerateTokenController extends Core
 		}
 
 		self::$handlingUserLogin = true;
+
 		$refreshToken = Option::getUserRefreshToken($oUser->ID);
 
 		$accessToken = '';
