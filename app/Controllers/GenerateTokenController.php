@@ -4,8 +4,6 @@ namespace WilokeJWT\Controllers;
 
 use Exception;
 use Firebase\JWT\JWT;
-use HSBlogCore\Helpers\Cookie;
-use HSBlogCore\Helpers\Session;
 use WilokeJWT\Core\Core;
 use WilokeJWT\Helpers\Option;
 use WilokeJWT\Illuminate\Message\MessageFactory;
@@ -32,6 +30,41 @@ final class GenerateTokenController extends Core {
 		add_filter( 'wiloke/filter/verify-access-token', [ $this, 'filterVerifyToken' ], 10, 2 );
 		add_filter( 'wiloke/filter/set-black-list-access-token', [ $this, 'filterSetBackListToken' ], 10, 3 );
 		add_filter( 'wiloke/filter/is-black-list-access-token', [ $this, 'filterIsBackListToken' ], 10, 3 );
+		add_action( 'wiloke-jwt/filter/after/logged-in', [ $this, 'filterGetTokenAndAccessTokenAfterLoggedIn' ], 10,
+			2 );
+		add_action( 'wiloke-jwt/after/logged-in', [ $this, 'generateTokenAndAccessTokenAfterLoggedIn' ], 10 );
+	}
+
+	public function generateTokenAndAccessTokenAfterLoggedIn( $userID ) {
+		$this->filterGetTokenAndAccessTokenAfterLoggedIn( [], $userID );
+	}
+
+	public function filterGetTokenAndAccessTokenAfterLoggedIn( $aResponse, $userID ) {
+		try {
+			$accessToken  = Option::getUserAccessToken( $userID );
+			$refreshToken = Option::getUserRefreshToken( $userID );
+
+			$oUser = new WP_User( $userID );
+			if ( empty( $refreshToken ) ) {
+				$refreshToken = $this->generateRefreshToken( $oUser );
+				$accessToken  = $this->generateToken( $oUser );
+			} else {
+				if ( ! $this->isAccessTokenExpired( $accessToken ) ) {
+					$accessToken = $this->renewAccessToken( $refreshToken );
+				}
+			}
+
+			return MessageFactory::factory()->success(
+				esc_html__( 'The token has been generated successfully', 'wiloke-jwt' ),
+				[
+					'accessToken'  => $accessToken,
+					'refreshToken' => $refreshToken
+				]
+			);
+		}
+		catch ( \Exception $oException ) {
+			return MessageFactory::factory()->error( $oException->getMessage(), $oException->getCode() );
+		}
 	}
 
 	/**
@@ -196,7 +229,7 @@ final class GenerateTokenController extends Core {
 
 		try {
 			$accessToken = ! empty( $oldAccessToken ) ? $oldAccessToken : Option::getUserToken( $oUserInfo->userID );
-			if ( $this->isAccessTokenExpired( $accessToken ) ) {
+			if ( $this->isAccessTokenExpired( $accessToken ) || $accessToken == $oldAccessToken ) {
 				return MessageFactory::factory()->success(
 					'The Access Token has been generated',
 					[
@@ -206,7 +239,7 @@ final class GenerateTokenController extends Core {
 				);
 			} else {
 				return MessageFactory::factory()->error(
-					esc_html__( 'The renew token is frozen', 'wiloke-jwt' ),
+					esc_html__( 'Sorry, We could not renew the token', 'wiloke-jwt' ),
 					403
 				);
 			}

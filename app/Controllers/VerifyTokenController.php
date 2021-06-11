@@ -6,6 +6,7 @@ use Exception;
 use Firebase\JWT\JWT;
 use WilokeJWT\Core\Core;
 use WilokeJWT\Helpers\Option;
+use WilokeJWT\Illuminate\Message\MessageFactory;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -31,16 +32,19 @@ final class VerifyTokenController extends Core {
 	public function filterVerifyToken( $aStatus, $token ): array {
 		try {
 			$aInfo = $this->verifyToken( $token );
-			return [
-				'userID' => $aInfo->userID,
-				'code'   => 200
-			];
+
+			return MessageFactory::factory()->success(
+				esc_html__( 'The token has been generated successfully.', 'wiloke-jwt' ),
+				[
+					'userID' => $aInfo->userID
+				]
+			);
 		}
-		catch ( Exception $e ) {
-			return [
-				'msg'  => $e->getMessage(),
-				'code' => 401
-			];
+		catch ( Exception $oException ) {
+			return MessageFactory::factory()->error(
+				$oException->getMessage(),
+				$oException->getCode()
+			);
 		}
 	}
 
