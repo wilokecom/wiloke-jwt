@@ -13,9 +13,9 @@ class RestMessage extends AbstractMessage
 	 * @param       $code
 	 * @param array $aAdditional
 	 *
-	 * @return \WP_REST_Response|array
+	 * @return \WP_REST_Response
 	 */
-	public function retrieve($msg, $code, $aAdditional = [])
+	public function retrieve($msg, $code, array $aAdditional = []): WP_REST_Response
 	{
 		if ($code == 200) {
 			return $this->success($msg, $aAdditional);
@@ -30,15 +30,9 @@ class RestMessage extends AbstractMessage
 	 *
 	 * @return \WP_REST_Response
 	 */
-	public function success($msg, $aAdditional = [])
+	public function success($msg, array $aAdditional = []): WP_REST_Response
 	{
-		$aData = [
-			'msg'    => $msg,
-			'status' => 'success'
-		];
-		$aData = array_merge($aAdditional, $aData);
-
-		return (new \WP_REST_Response($aData, 200));
+		return (new \WP_REST_Response($this->handleSuccess($msg, $aAdditional), 200));
 	}
 
 	/**
@@ -47,12 +41,8 @@ class RestMessage extends AbstractMessage
 	 *
 	 * @return \WP_REST_Response
 	 */
-	public function error($msg, $code)
+	public function error($msg, $code, array $aAdditional = []): WP_REST_Response
 	{
-		return new \WP_REST_Response([
-			'error' => [
-				'msg' => $msg
-			]
-		], $code);
+		return new \WP_REST_Response($this->handleError($msg, $code, $aAdditional));
 	}
 }

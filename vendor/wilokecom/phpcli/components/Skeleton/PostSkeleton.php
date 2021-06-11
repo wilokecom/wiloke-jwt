@@ -8,19 +8,7 @@ class PostSkeleton extends Skeleton
 	private static $_self = null;
 	private        $post;
 
-	public function validate()
-	{
-		// TODO: Implement validate() method.
-	}
-
-	public function setObject(): Skeleton
-	{
-		$this->oInstance = self::$_self;
-		return $this;
-	}
-
-
-	public static function init(\WP_Post $post): PostSkeleton
+	public static function setPost(\WP_Post $post): PostSkeleton
 	{
 		if (!self::$_self) {
 			self::$_self = new PostSkeleton();

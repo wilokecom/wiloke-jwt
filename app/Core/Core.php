@@ -260,7 +260,7 @@ class Core {
 	 *
 	 * @return mixed|string
 	 */
-	protected function generateToken( WP_User $oUser, $ignoreSetCookie = false ) {
+	protected function generateToken( WP_User $oUser, bool $ignoreSetCookie = false ) {
 		$token = Option::getUserToken( $oUser->ID );
 		if ( ! empty( $token ) ) {
 			try {

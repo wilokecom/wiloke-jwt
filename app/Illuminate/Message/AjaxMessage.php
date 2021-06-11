@@ -8,55 +8,56 @@ namespace WilokeJWT\Illuminate\Message;
  */
 class AjaxMessage extends AbstractMessage
 {
-    /**
-     * @param       $msg
-     * @param       $code
-     * @param array $aAdditional
-     *
-     * @return void
-     */
-    public function retrieve($msg, $code, $aAdditional = [])
-    {
-        if ($code == 200) {
-            $this->success($msg, $aAdditional);
-        } else {
-            $this->error($msg, $code, $aAdditional);
-        }
-    }
+	/**
+	 * @param       $msg
+	 * @param       $code
+	 * @param array $aAdditional
+	 *
+	 * @return void
+	 */
+	public function retrieve($msg, $code, array $aAdditional = [])
+	{
+		if ($code == 200) {
+			$this->success($msg, $aAdditional);
+		} else {
+			$this->error($msg, $code, $aAdditional);
+		}
+	}
 
-    /**
-     * @param       $msg
-     * @param array $aAdditional
-     *
-     * @return void
-     */
-    public function success($msg, $aAdditional = [])
-    {
-        $aData = [
-            'data' => $msg
-        ];
+	private function sendJson(array $aMessage, $statusCode)
+	{
+		if (!headers_sent()) {
+			header('Content-Type: application/json; charset=' . get_option('blog_charset'));
+			if (null !== $statusCode) {
+				status_header($statusCode);
+			}
+		}
 
-        $aData = array_merge($aData, $aAdditional);
+		echo wp_json_encode($aMessage);
 
-        wp_send_json_success($aData);
-    }
+		die;
+	}
 
-    /**
-     * @param       $msg
-     * @param array $aAdditional
-     * @param       $code
-     *
-     * @return void
-     */
-    public function error($msg, $code, $aAdditional = [])
-    {
-	    $aData = [
-		    'msg'    => $msg,
-		    'status' => 'success'
-	    ];
+	/**
+	 * @param       $msg
+	 * @param array $aAdditional
+	 *
+	 * @return void
+	 */
+	public function success($msg, array $aAdditional = [])
+	{
+		$this->sendJson($this->handleSuccess($msg, $aAdditional), 200);
+	}
 
-        $aData = array_merge($aData, $aAdditional);
-
-        wp_send_json_error($aData);
-    }
+	/**
+	 * @param       $msg
+	 * @param array $aAdditional
+	 * @param       $code
+	 *
+	 * @return void
+	 */
+	public function error($msg, $code, array $aAdditional = [])
+	{
+		$this->sendJson($this->handleError($msg, $code, $aAdditional), $code);
+	}
 }

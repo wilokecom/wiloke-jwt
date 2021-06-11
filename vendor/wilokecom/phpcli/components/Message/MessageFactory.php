@@ -9,14 +9,12 @@
 class MessageFactory
 {
     /**
-     * @param $type
+     * @param string $type
      *
      * @return AjaxMessage|NormalMessage|RestMessage
      */
-    public static function factory($type = 'normal')
+    public static function factory(string $type = 'normal')
     {
-    	$oInstance = null;
-
         switch ($type) {
             case 'rest':
                 $oInstance = new RestMessage();

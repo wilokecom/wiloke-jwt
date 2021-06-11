@@ -10,10 +10,10 @@
     }
   },
   "require": {
-    "firebase/php-jwt": "^5.0"
+    "firebase/php-jwt": "^5.0",
+    "wilokecom/phpcli": "^1.30"
   },
   "require-dev": {
-    "wilokecom/phpcli": "^1.28",
     "phpunit/phpunit": "^7.2"
   }
 }
