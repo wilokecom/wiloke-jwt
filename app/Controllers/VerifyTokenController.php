@@ -31,15 +31,18 @@ final class VerifyTokenController extends Core {
 	public function filterVerifyToken( $aStatus, $token ): array {
 		try {
 			$aInfo = $this->verifyToken( $token );
+
 			return [
 				'userID' => $aInfo->userID,
-				'code'   => 200
+				'code'   => 200,
+				'status' => 'success'
 			];
 		}
 		catch ( Exception $e ) {
 			return [
-				'msg'  => $e->getMessage(),
-				'code' => 401
+				'msg'    => $e->getMessage(),
+				'code'   => 401,
+				'status' => 'error'
 			];
 		}
 	}

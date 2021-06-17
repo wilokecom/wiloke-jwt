@@ -2,6 +2,8 @@
 
 namespace WilokeJWT\Illuminate\Message;
 
+use WP_REST_Response;
+
 /**
  * Class AjaxMessage
  * @package HSBlogCore\Helpers

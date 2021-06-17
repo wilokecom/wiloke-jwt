@@ -114,15 +114,19 @@ final class GenerateTokenController extends Core {
 	 * @param $status
 	 * @param $token
 	 *
-	 * @return array|bool
+	 * @return array
 	 */
-	public function filterRevokeRefreshToken( $status, $token ) {
+	public function filterRevokeRefreshToken( $status, $refreshToken ): array {
 		try {
-			$oUserInfo = $this->verifyToken( $token, 'refresh_token' );
+			$oUserInfo = $this->verifyToken( $refreshToken, 'refresh_token' );
 			$this->revokeRefreshAccessToken( $oUserInfo->userID );
 
 			return MessageFactory::factory()->success(
-				'The Refresh Token has been revoked.'
+				'The Refresh Token has been revoked.',
+				[
+					'refreshToken' => Option::getUserRefreshToken( $oUserInfo->userID ),
+					'accessToken'  => Option::getUserAccessToken( $oUserInfo->userID )
+				]
 			);
 		}
 		catch ( Exception $oException ) {

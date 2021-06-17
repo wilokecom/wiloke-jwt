@@ -194,6 +194,7 @@ class Core {
 
 			$oParse = JWT::decode( $token, $key, [ 'HS256' ] );
 			$oUser  = json_decode( $oParse->message );
+
 			if ( ! isset( $oUser->userID ) || empty( $oUser->userID ) ) {
 				$errMsg = esc_html__( 'The user has been removed or does not exist', 'wiloke-jwt' );
 			} else {
@@ -310,11 +311,11 @@ class Core {
 		try {
 			$oParse = JWT::decode( $accessToken, Option::getAccessTokenKey(), [ 'HS256' ] );
 			$oUser  = json_decode( $oParse->message );
-			if (empty( $oUser) || !isset( $oUser->userID)) {
+			if ( empty( $oUser ) || ! isset( $oUser->userID ) ) {
 				return true;
 			}
 
-			if ($this->isBlackListAccessToken( $oUser->userID, $accessToken)) {
+			if ( $this->isBlackListAccessToken( $oUser->userID, $accessToken ) ) {
 				return true;
 			}
 
