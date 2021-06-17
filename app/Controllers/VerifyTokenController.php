@@ -6,6 +6,7 @@ use Exception;
 use Firebase\JWT\JWT;
 use WilokeJWT\Core\Core;
 use WilokeJWT\Helpers\Option;
+use WilokeJWT\Illuminate\Message\MessageFactory;
 use WP_REST_Request;
 use WP_REST_Response;
 
