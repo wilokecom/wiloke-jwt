@@ -19,7 +19,7 @@
                         location.reload();
                     } else {
                         let oData = response.data;
-                        alert(oData.msg);
+                        alert(oData.message);
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
@@ -65,7 +65,7 @@
                 data: {
                     action: "wiloke-renew-token-user",
                     password: checkPassword,
-                    userId: $('#wilokeRenewAcToken').attr('data-userID'),
+                    userID: $('#wilokeRenewAcToken').attr('data-userID'),
                 },
                 beforeSend: function () {
                     // Có thể thực hiện công việc load hình ảnh quay quay trước khi đổ dữ liệu ra

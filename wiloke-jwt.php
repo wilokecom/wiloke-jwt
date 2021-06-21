@@ -24,7 +24,7 @@ define( 'WILOKE_JWT_API_VERSION', 'v1' );
 define( 'WILOKE_JWT_API', WILOKE_JWT_API_NAMESPACE . '/' . WILOKE_JWT_API_VERSION );
 define( 'WILOKE_JWT_VIEWS', plugin_dir_path( __FILE__ ) . 'app/Views/' );
 define( 'INVALID_REFRESH_TOKEN', 'INVALID_REFRESH_TOKEN' );
-define( 'WILOKE_JWT_VERSION', 1.0 );
+define( 'WILOKE_JWT_VERSION', 1.1 );
 define( 'WILOKE_JWT_URL', plugin_dir_url( __FILE__ ) );
 define( 'WILOKE_JWT_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WILOKE_JWT_PREFIX', 'wiloke-jwt_' );

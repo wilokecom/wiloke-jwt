@@ -23,6 +23,7 @@ class AdminMenuController
 	{
 		add_action('admin_menu', [$this, 'registerMenu']);
 		add_action('network_admin_menu', [$this, 'registerMenu']);
+		add_action('admin_init', [$this, 'generateAccessTokenAndRefreshToken']);
 	}
 
 	public function setParentSlug(): AdminMenuController
@@ -58,6 +59,16 @@ class AdminMenuController
 			$this->slug,
 			[$this, 'settings']
 		);
+	}
+
+	public function generateAccessTokenAndRefreshToken() {
+		if (isset( $_REQUEST['route']) && $_POST['route'] == 'generate_tokens') {
+			if (!current_user_can( 'administrator')) {
+				wp_die('You do not have permission to access this page');
+			}
+
+			$aResponse = apply_filters('wiloke/filter/create-access-token-and-refresh-token', new \WP_User(get_current_user_id()));
+		}
 	}
 
 	public function settings()

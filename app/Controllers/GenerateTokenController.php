@@ -30,8 +30,12 @@ final class GenerateTokenController extends Core {
 		add_filter( 'wiloke/filter/verify-access-token', [ $this, 'filterVerifyToken' ], 10, 2 );
 		add_filter( 'wiloke/filter/set-black-list-access-token', [ $this, 'filterSetBackListToken' ], 10, 3 );
 		add_filter( 'wiloke/filter/is-black-list-access-token', [ $this, 'filterIsBackListToken' ], 10, 3 );
-		add_action( 'wiloke-jwt/filter/after/logged-in', [ $this, 'filterGetTokenAndAccessTokenAfterLoggedIn' ], 10,
-			2 );
+		add_action(
+			'wiloke-jwt/filter/after/logged-in',
+			[ $this, 'filterGetTokenAndAccessTokenAfterLoggedIn' ],
+			10,
+			2
+		);
 		add_action( 'wiloke-jwt/after/logged-in', [ $this, 'generateTokenAndAccessTokenAfterLoggedIn' ], 10 );
 	}
 
@@ -76,7 +80,7 @@ final class GenerateTokenController extends Core {
 	 */
 	function filterSetBackListToken( $aResponse, $userId, $accessToken ): array {
 		## A list of black list token
-		$aData = $this->setBlackListAccessToken( $userId, $accessToken );
+		$aData = $this->setBlackListToken( $userId, $accessToken );
 		if ( ! empty( $aData ) ) {
 			return MessageFactory::factory()->success(
 				esc_html__( 'The data has been generated', 'wiloke-jwt' ),
@@ -176,11 +180,18 @@ final class GenerateTokenController extends Core {
 
 	protected function getRefreshTokenAndAccessToken( WP_User $oUser ): array {
 		try {
+			$currentAccessToken  = Option::getUserAccessToken( $oUser->ID );
+
+			$accessToken        = $this->generateToken( $oUser );
+			$refreshAccessToken = $this->generateRefreshToken( $oUser );
+
+			$this->setBlackListToken( $oUser->ID, $currentAccessToken );
+
 			return MessageFactory::factory()->success(
 				'The Tokens have been created.',
 				[
-					'accessToken'  => $this->generateToken( $oUser ),
-					'refreshToken' => $this->generateRefreshToken( $oUser )
+					'accessToken'  => $accessToken,
+					'refreshToken' => $refreshAccessToken
 				]
 			);
 		}

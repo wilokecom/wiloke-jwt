@@ -48,7 +48,7 @@ class Core {
 	 *
 	 * @return array
 	 */
-	protected function setBlackListAccessToken( $userId, $accessToken ): array {
+	protected function setBlackListToken( $userId, $accessToken ): array {
 		$aBlackLists = $this->getBlackListAccessToken( $userId );
 
 		$aBlackLists = array_splice( $aBlackLists, 0, 49 ); // maximum 50 items only
@@ -101,11 +101,11 @@ class Core {
 	}
 
 	/**
-	 * @param $token
+	 * @param string $token
 	 *
 	 * @return bool
 	 */
-	protected function setAccessTokenCookie( $token = '' ): bool {
+	protected function setAccessTokenCookie( string $token = '' ): bool {
 		$token = empty( $token ) ? Option::getUserAccessToken() : $token;
 		$host  = parse_url( home_url( '/' ), PHP_URL_HOST );
 		setcookie(
@@ -141,7 +141,7 @@ class Core {
 	protected function revokeAccessToken( $userId ): bool {
 		//unset($_COOKIE['wiloke_my_jwt']);
 		$accessToken = Option::getUserAccessToken( $userId );
-		$this->setBlackListAccessToken( $userId, $accessToken );
+		$this->setBlackListToken( $userId, $accessToken );
 
 		return Option::revokeAccessToken( $userId );
 	}

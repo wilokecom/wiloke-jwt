@@ -19,10 +19,17 @@ class Option {
 	 */
 	public static function getSiteJWTSettings(): array {
 		if ( ! is_multisite() || ! is_network_admin() ) {
-			self::$aSiteJWTOptions = get_option( self::$optionKey );
+			$aSiteJWTOptions = get_option( self::$optionKey );
 		} else {
-			self::$aSiteJWTOptions = get_site_option( self::$optionKey );
+			$aSiteJWTOptions = get_site_option( self::$optionKey );
 		}
+
+		self::$aSiteJWTOptions = is_array( $aSiteJWTOptions ) ? $aSiteJWTOptions : [
+			'token_expiry'       => '',
+			'key'                => '',
+			'is_test_mode'       => 0,
+			'test_token_expired' => 0
+		];
 
 		return self::$aSiteJWTOptions;
 	}
@@ -104,7 +111,7 @@ class Option {
 	 * @return false|int
 	 */
 	public static function getAccessTokenExp() {
-		if ( Option::getOptionField( 'is_test_mode' ) === 'yes' ) {
+		if ( Option::isTestMode() ) {
 			$val = abs( Option::getOptionField( 'test_token_expired' ) );
 			$val = empty( $val ) ? 10 : $val;
 
@@ -248,8 +255,6 @@ class Option {
 	}
 
 	public static function testModeToken() {
-		var_dump( get_option( self::$optionKey ) );
-		die();
 		$aValueUpdate = array_merge( get_option( self::$optionKey ), [ 'is_test_mode' => 'yes' ] );
 		update_option( self::$optionKey, $aValueUpdate );
 		self::$aJWTOptions = [];

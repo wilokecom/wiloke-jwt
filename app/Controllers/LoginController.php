@@ -139,8 +139,7 @@ final class LoginController extends Core {
 
 		if ( ! AppClientModel::isValidApp( $oRequest->get_param( 'app_id' ), $oRequest->get_param( 'app_secret' ) ) ) {
 			return MessageFactory::factory( 'rest' )->error(
-				esc_html__( 'The app id or app secret not has existed in the database or the page had must enable public',
-					'wiloke-jwt' ),
+				esc_html__( 'Invalid App ID', 'wiloke-jwt' ),
 				400
 			);
 		}
