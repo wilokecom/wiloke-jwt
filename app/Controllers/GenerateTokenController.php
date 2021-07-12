@@ -244,7 +244,7 @@ final class GenerateTokenController extends Core {
 
 		try {
 			$accessToken = ! empty( $oldAccessToken ) ? $oldAccessToken : Option::getUserToken( $oUserInfo->userID );
-			if ( $this->isAccessTokenExpired( $accessToken ) || $accessToken == $oldAccessToken ) {
+			if ( $accessToken == $oldAccessToken ) {
 				return MessageFactory::factory()->success(
 					'The Access Token has been generated',
 					[

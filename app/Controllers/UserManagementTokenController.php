@@ -164,20 +164,28 @@ class UserManagementTokenController {
 			$oUser = get_userdata( $_POST['userID'] );
 			if ( wp_check_password( $_POST['password'], $oUser->data->user_pass, $oUser->ID ) ) {
 				if ( ( get_current_user_id() == $_POST['userID'] ) || current_user_can( 'administrator' ) ) {
-					$aResponse = apply_filters(
-						'wiloke/filter/renew-access-token',
-						[
-							'status'  => 'error',
-							'message' => 'The filter has been removed',
-							'code'    => 400
-						],
-						Option::getUserRefreshToken( $oUser->ID ),
-						Option::getUserAccessToken( $oUser->ID )
-					);
+					$refreshToken = Option::getUserRefreshToken( $oUser->ID );
+
+					if ( ! empty( $refreshToken ) ) {
+						$aResponse = apply_filters(
+							'wiloke/filter/renew-access-token',
+							[
+								'status'  => 'error',
+								'message' => 'The filter has been removed',
+								'code'    => 400
+							],
+							Option::getUserRefreshToken( $oUser->ID ),
+							Option::getUserAccessToken( $oUser->ID )
+						);
+					} else {
+						$aResponse = apply_filters(
+							'wiloke/filter/create-access-token-and-refresh-token',
+							$oUser
+						);
+					}
 
 					if ( $aResponse['status'] == 'success' ) {
 						Option::saveUserToken( $aResponse['data']['accessToken'], $_POST['userID'] );
-						Option::saveUserRefreshToken( $aResponse['data']['refreshToken'], $_POST['userID'] );
 
 						return MessageFactory::factory( 'ajax' )->success( 'The token is renew success' );
 					}
