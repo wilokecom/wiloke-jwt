@@ -180,9 +180,9 @@ final class GenerateTokenController extends Core {
 
 	protected function getRefreshTokenAndAccessToken( WP_User $oUser ): array {
 		try {
-			$currentAccessToken  = Option::getUserAccessToken( $oUser->ID );
+			$currentAccessToken = Option::getUserAccessToken( $oUser->ID );
 
-			$accessToken        = $this->generateToken( $oUser );
+			$accessToken        = $this->generateToken( $oUser, true );
 			$refreshAccessToken = $this->generateRefreshToken( $oUser );
 
 			$this->setBlackListToken( $oUser->ID, $currentAccessToken );
@@ -248,7 +248,7 @@ final class GenerateTokenController extends Core {
 				return MessageFactory::factory()->success(
 					'The Access Token has been generated',
 					[
-						'accessToken' => $this->renewAccessToken( $refreshToken ),
+						'accessToken' => $this->renewAccessToken( $refreshToken, true ),
 						'userID'      => $oUserInfo->userID
 					]
 				);

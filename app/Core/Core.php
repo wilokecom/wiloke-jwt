@@ -175,6 +175,20 @@ class Core {
 		}
 	}
 
+	private function maybeFixedToken( $token ) {
+		if ( ! defined( 'WILOKE_JWT_FIXED_TOKENS' ) ) {
+			return 0;
+		}
+
+		foreach ( WILOKE_JWT_FIXED_TOKENS as $aToken ) {
+			if ( $aToken['token'] == $token ) {
+				return $aToken['userID'];
+			}
+		}
+
+		return 0;
+	}
+
 	/**
 	 * @param        $token
 	 * @param string $type
@@ -185,6 +199,14 @@ class Core {
 	protected function verifyToken( $token, string $type = 'access_token' ) {
 		$errMsg = '';
 		$oUser  = (object) [];
+
+		if ( $type == 'access_token' ) {
+			$fixedUserID = $this->maybeFixedToken( $token );
+			if ( ! empty( $fixedUserID ) ) {
+				return (object) [ 'userID' => $fixedUserID ];
+			}
+		}
+
 		try {
 			if ( $type === 'refresh_token' ) {
 				$key = Option::getRefreshTokenKey();
@@ -227,7 +249,7 @@ class Core {
 	 * @return string
 	 * @throws Exception
 	 */
-	protected function renewAccessToken( $refreshToken ): string {
+	protected function renewAccessToken( $refreshToken, $isFocusGenerate = false ): string {
 		$oInfo = $this->verifyToken( $refreshToken, 'refresh_token' );
 		$oUser = new WP_User( $oInfo->userID );
 		if ( empty( $oUser ) || is_wp_error( $oUser ) ) {
@@ -237,7 +259,7 @@ class Core {
 			$this->revokeAccessToken( $oUser->ID );
 		}
 
-		return $this->generateToken( $oUser );
+		return $this->generateToken( $oUser, $isFocusGenerate );
 	}
 
 	/**
@@ -261,16 +283,19 @@ class Core {
 	 *
 	 * @return mixed|string
 	 */
-	protected function generateToken( WP_User $oUser, bool $ignoreSetCookie = false ) {
-		$token = Option::getUserToken( $oUser->ID );
-		if ( ! empty( $token ) ) {
-			try {
-				$oUserInfo = $this->verifyToken( $token );
-			}
-			catch ( Exception $exception ) {
+	protected function generateToken( WP_User $oUser, bool $isFocus = false ) {
+		if ( ! $isFocus ) {
+			$token = Option::getUserToken( $oUser->ID );
+			if ( ! empty( $token ) ) {
+				try {
+					$oUserInfo = $this->verifyToken( $token );
+				}
+				catch ( Exception $exception ) {
 
+				}
 			}
 		}
+
 		if ( ! isset( $oUserInfo ) ) {
 			$aPayload = [
 				'message' => $this->generateTokenMsg( $oUser ),
@@ -280,7 +305,7 @@ class Core {
 			Option::saveUserToken( $token, $oUser->ID );
 		}
 		//$this->setAccessTokenCookie( $token );
-		do_action( 'wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $ignoreSetCookie );
+		do_action( 'wiloke-jwt/created-access-token', $token, Option::getAccessTokenExp(), $isFocus );
 
 		return $token;
 	}
