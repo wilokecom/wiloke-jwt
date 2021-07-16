@@ -216,7 +216,6 @@ class Core {
 
 			$oParse = JWT::decode( $token, $key, [ 'HS256' ] );
 			$oUser  = json_decode( $oParse->message );
-
 			if ( ! isset( $oUser->userID ) || empty( $oUser->userID ) ) {
 				$errMsg = esc_html__( 'The user has been removed or does not exist', 'wiloke-jwt' );
 			} else {
