@@ -121,7 +121,6 @@ final class GenerateTokenController extends Core {
 	public function filterVerifyToken( $status, $accessToken ) {
 		try {
 			$oUser = $this->verifyToken( $accessToken );
-
 			return MessageFactory::factory()->success(
 				'The token is correct',
 				[
