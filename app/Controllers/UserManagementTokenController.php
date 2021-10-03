@@ -180,6 +180,10 @@ class UserManagementTokenController {
 					} else {
 						$aResponse = apply_filters(
 							'wiloke/filter/create-access-token-and-refresh-token',
+							[
+								'status'  => 'error',
+								'message' => ''
+							],
 							$oUser
 						);
 					}

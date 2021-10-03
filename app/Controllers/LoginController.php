@@ -192,6 +192,10 @@ final class LoginController extends Core {
 					} else {
 						$aResponse = apply_filters(
 							'wiloke/filter/create-access-token-and-refresh-token',
+							[
+								'status'  => 'error',
+								'message' => ''
+							],
 							new WP_User( $userId )
 						);
 

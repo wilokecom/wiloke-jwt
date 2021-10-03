@@ -24,7 +24,9 @@ final class GenerateTokenController extends Core {
 		add_filter( 'wiloke/filter/renew-access-token', [ $this, 'filterRenewAccessToken' ], 10, 3 );
 		add_filter(
 			'wiloke/filter/create-access-token-and-refresh-token',
-			[ $this, 'filterGetAccessTokenAndRefreshToken' ]
+			[ $this, 'filterGetAccessTokenAndRefreshToken' ],
+			10,
+			2
 		);
 		add_filter( 'wiloke/filter/is-access-token-expired', [ $this, 'filterIsTokenExpired' ], 10, 2 );
 		add_filter( 'wiloke/filter/verify-access-token', [ $this, 'filterVerifyToken' ], 10, 2 );
@@ -173,7 +175,7 @@ final class GenerateTokenController extends Core {
 		}
 	}
 
-	public function filterGetAccessTokenAndRefreshToken( WP_User $oUser ): array {
+	public function filterGetAccessTokenAndRefreshToken( $aStatus, WP_User $oUser ): array {
 		return $this->getRefreshTokenAndAccessToken( $oUser );
 	}
 

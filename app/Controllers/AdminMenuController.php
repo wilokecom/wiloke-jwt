@@ -67,7 +67,14 @@ class AdminMenuController
 				wp_die('You do not have permission to access this page');
 			}
 
-			$aResponse = apply_filters('wiloke/filter/create-access-token-and-refresh-token', new \WP_User(get_current_user_id()));
+			$aResponse = apply_filters(
+				'wiloke/filter/create-access-token-and-refresh-token',
+				[
+					'status'  => 'error',
+					'message' => ''
+				],
+				new \WP_User(get_current_user_id())
+			);
 		}
 	}
 
