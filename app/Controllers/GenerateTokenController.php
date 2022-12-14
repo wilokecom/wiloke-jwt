@@ -68,7 +68,7 @@ final class GenerateTokenController extends Core {
 				]
 			);
 		}
-		catch ( \Exception $oException ) {
+		catch (Exception $oException ) {
 			return MessageFactory::factory()->error( $oException->getMessage(), $oException->getCode() );
 		}
 	}
@@ -130,7 +130,7 @@ final class GenerateTokenController extends Core {
 				]
 			);
 		}
-		catch ( \Exception $oException ) {
+		catch (Exception $oException ) {
 			return MessageFactory::factory()->error(
 				$oException->getMessage(),
 				$oException->getCode()

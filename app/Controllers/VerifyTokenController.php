@@ -14,13 +14,24 @@ use WP_REST_Response;
  * Class VerifyTokenController
  * @package WilokeJWT\Controllers
  */
-final class VerifyTokenController extends Core {
+final class VerifyTokenController extends Core
+{
 	/**
 	 * VerifyTokenController constructor.
 	 */
-	public function __construct() {
-		add_action( 'rest_api_init', [ $this, 'registerRestRouter' ] );
-		add_filter( 'wiloke-jwt/filter/verify-token', [ $this, 'filterVerifyToken' ], 10, 2 );
+	public function __construct()
+	{
+		add_action('rest_api_init', [$this, 'registerRestRouter']);
+		add_filter('wiloke-jwt/filter/verify-token', [$this, 'filterVerifyToken'], 10, 2);
+		add_filter("determine_current_user", [$this, "verifyUserToken"], 10);
+	}
+
+	public function verifyUserToken($isLoggedIn)
+	{
+		if ($isLoggedIn) {
+			return;
+		}
+
 	}
 
 	/**
@@ -29,9 +40,10 @@ final class VerifyTokenController extends Core {
 	 *
 	 * @return array
 	 */
-	public function filterVerifyToken( $aStatus, $token ): array {
+	public function filterVerifyToken($aStatus, $token): array
+	{
 		try {
-			$aInfo = $this->verifyToken( $token );
+			$aInfo = $this->verifyToken($token);
 
 			return [
 				'userID' => $aInfo->userID,
@@ -39,7 +51,7 @@ final class VerifyTokenController extends Core {
 				'status' => 'success'
 			];
 		}
-		catch ( Exception $e ) {
+		catch (Exception $e) {
 			return [
 				'msg'    => $e->getMessage(),
 				'code'   => 401,
@@ -48,24 +60,25 @@ final class VerifyTokenController extends Core {
 		}
 	}
 
-	public function registerRestRouter() {
-		register_rest_route( 'wilokejwt/v1', '/signin', [
+	public function registerRestRouter()
+	{
+		register_rest_route('wilokejwt/v1', '/signin', [
 			'methods'             => 'POST',
 			'args'                => [
 				'username' => [
 					'required'    => true,
 					'type'        => 'string',
-					'description' => esc_html__( 'The username is required', 'wiloke-jwt' )
+					'description' => esc_html__('The username is required', 'wiloke-jwt')
 				],
 				'password' => [
 					'required'    => true,
 					'type'        => 'string',
-					'description' => esc_html__( 'The password is required', 'wiloke-jwt' )
+					'description' => esc_html__('The password is required', 'wiloke-jwt')
 				]
 			],
-			'callback'            => [ $this, 'signIn' ],
+			'callback'            => [$this, 'signIn'],
 			'permission_callback' => '__return_true'
-		] );
+		]);
 	}
 
 	/**
@@ -73,24 +86,25 @@ final class VerifyTokenController extends Core {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function signIn( WP_REST_Request $oRequest ) {
-		$oUser = wp_signon( [
-			'user_login'    => $oRequest->get_param( 'username' ),
-			'user_password' => $oRequest->get_param( 'password' ),
+	public function signIn(WP_REST_Request $oRequest)
+	{
+		$oUser = wp_signon([
+			'user_login'    => $oRequest->get_param('username'),
+			'user_password' => $oRequest->get_param('password'),
 			'remember'      => true
-		], is_ssl() );
+		], is_ssl());
 
-		if ( is_wp_error( $oUser ) ) {
-			return new WP_REST_Response( [
+		if (is_wp_error($oUser)) {
+			return new WP_REST_Response([
 				'error' => $oUser->get_error_message()
-			], 401 );
+			], 401);
 		}
 
 		return new WP_REST_Response(
 			apply_filters(
 				'wiloke-jwt/app/general-token-controller/signed-in-msg',
 				[
-					'token' => Option::getUserToken( $oUser->ID )
+					'token' => Option::getUserToken($oUser->ID)
 				]
 			),
 			200
