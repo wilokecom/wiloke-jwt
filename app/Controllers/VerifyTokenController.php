@@ -26,12 +26,29 @@ final class VerifyTokenController extends Core
 		add_filter("determine_current_user", [$this, "verifyUserToken"], 10);
 	}
 
-	public function verifyUserToken($isLoggedIn)
+	public function verifyUserToken($isLoggedIn): bool
 	{
 		if ($isLoggedIn) {
-			return;
+			return true;
 		}
 
+		$token = $this->getBearerToken();
+		if (empty($token)) {
+			return $isLoggedIn;
+		}
+
+		try {
+			$oInfo = $this->verifyToken($token);
+			if (isset($oInfo->userID)) {
+				wp_set_current_user($oInfo->userID);
+				return true;
+			}
+
+			return false;
+		}
+		catch (Exception $oException) {
+			return $isLoggedIn;
+		}
 	}
 
 	/**
